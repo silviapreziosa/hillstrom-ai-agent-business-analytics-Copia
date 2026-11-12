@@ -121,3 +121,43 @@ writer with an explicit `csv.writer`; the file was regenerated and verified
 byte-clean (7 lines: header + 6 rows).
 All failures were printed, inspected, and re-run to completion; fixtures,
 expected values, and all PASS verdicts were unchanged.
+
+---
+
+## Records and decisions (2026-11-12)
+
+### R1. Irrecoverable historical evidence — overwritten failure logs (confirmed)
+
+The first execution of `src/04_negative_controls.py` (2026-11-05) failed loudly
+(two script defects; see transparency log above). Its console transcript was
+saved to a temporary file and then **overwritten** by the successful rerun;
+it was never committed. The overwrite cannot be recovered from the existing
+files. The failure survives only in the session transcript (the FAIL lines were
+printed and inspected at the time; expected values were never changed). No
+historical evidence has been fabricated to fill this gap. Future runs use
+`src/run.sh`, which preserves failures as `*_first_run_fail.txt` and logs exit
+codes (`results/logs/exit_codes.csv`). The repository contains no pre-wrapper
+exit codes: those exist only in the session transcript.
+
+### R2. Raw dataset not published (decision, Option B — approved 2026-11-12)
+
+`data/raw/hillstorm_no_indices.csv` is excluded from the repository
+(`.gitignore`: `data/raw/*.csv`). Its identity is anchored by SHA-256
+`00a6a868e05a9ffe7382da51629f6d6dce88c5acfc945e79d314ebc78fd3a2c0`
+(`results/verification/sha256_log.csv`). Provenance as the Hillstrom
+"MineThatData" dataset remains an **unverified assumption**; **no
+redistribution rights are claimed** until independently verified (see
+README.md, "Data provenance"). "Unchanged" in the logs means unchanged since
+first recorded, not verified against an external pre-existing hash.
+
+### R3. Classification index of documented errors
+
+- **Confirmed errors** (falsified or arithmetically wrong; corrected and
+  re-tested): entries 1, 4, 5, 7, 8, 9, 10, 11.
+- **Methodological ambiguities** (resolved by explicit decision, pending
+  pinning in `plan.md`): entries 2 (multiplicity family: fixed at 6),
+  3 (tautological funnel test: replaced by falsifiable assertions), and the
+  assumption-labeling gaps in entry 6.
+- **Unresolved assumptions** (explicitly NOT verified; see "Open assumptions"
+  section): Hillstrom provenance, one-row-one-customer, spend-cap
+  interpretation, and randomization itself.
