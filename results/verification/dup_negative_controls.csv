@@ -1,0 +1,38 @@
+test,quantity,expected,pathA_pandas,pathB_purepy,verdict
+NC-1,asgiven.mean.visit.Mens,0.4,0.4,0.4,PASS
+NC-1,asgiven.mean.visit.No E-Mail,0.2,0.2,0.2,PASS
+NC-1,asgiven.contrast.visit,0.2,0.2,0.2,PASS
+NC-1,dedup.mean.visit.Mens,0.25,0.25,0.25,PASS
+NC-1,dedup.mean.visit.No E-Mail,0.25,0.25,0.25,PASS
+NC-1,dedup.contrast.visit,0.0,0.0,0.0,PASS
+NC-1,delta.contrast.visit,-0.2,-0.2,-0.2,PASS
+NC-1,rows,10,10,10,PASS
+NC-1,rows_dedup,8,8,8,PASS
+NC-1,keepFalse,4,4,4,PASS
+NC-1,patterns,2,2,2,PASS
+NC-2,asgiven.mean.spend.Mens,50.0,50.0,50.0,PASS
+NC-2,asgiven.mean.spend.No E-Mail,25.0,25.0,25.0,PASS
+NC-2,asgiven.contrast.spend,25.0,25.0,25.0,PASS
+NC-2,dedup.mean.spend.Mens,33.333333333333336,33.333333333333336,33.333333333333336,PASS
+NC-2,dedup.mean.spend.No E-Mail,33.333333333333336,33.333333333333336,33.333333333333336,PASS
+NC-2,dedup.contrast.spend,0.0,0.0,0.0,PASS
+NC-2,delta.contrast.spend,-25.0,-25.0,-25.0,PASS
+NC-2,rows_dedup,6,6,6,PASS
+NC-2,bad_spend_noconv,0,0,0,PASS
+NC-2,bad_conv_novisit,0,0,0,PASS
+NC-3,rows,3,3,3,PASS
+NC-3,rows_dedup,2,2,2,PASS
+NC-3,asgiven.mean.visit.No E-Mail,0.3333333333333333,0.3333333333333333,0.3333333333333333,PASS
+NC-3,dedup.mean.visit.No E-Mail,0.5,0.5,0.5,PASS
+NC-3,delta.contrast.visit,0.16666666666666666,0.16666666666666669,0.16666666666666669,PASS
+PC-1,rows,12,12,12,PASS
+PC-1,rows_dedup,6,6,6,PASS
+PC-1,asgiven.mean.visit.Mens,0.3333333333333333,0.3333333333333333,0.3333333333333333,PASS
+PC-1,asgiven.mean.visit.No E-Mail,0.0,0.0,0.0,PASS
+PC-1,dedup.mean.visit.Mens,0.3333333333333333,0.3333333333333333,0.3333333333333333,PASS
+PC-1,dedup.mean.visit.No E-Mail,0.0,0.0,0.0,PASS
+PC-1,delta.contrast.visit,0.0,0.0,0.0,PASS
+PC-1,SE ratio,0.707106781187,0.7071067811865476,0.7071067811865476,PASS
+V-0A,duplicate rows: NC-1 without ID / with inherited-ID column,2 / 2,2,2,PASS
+V-0B,duplicate rows with per-row distinct IDs (identical features),0,-,0,PASS
+V-fixture-fail,violations detected in corrupted fixture,>=1,1,-,PASS

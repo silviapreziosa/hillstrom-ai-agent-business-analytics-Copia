@@ -1,0 +1,8 @@
+cross-path max |A-B| over all metrics: 3.331e-16
+identity PASS: excess = total - unique
+identity PASS: excess = keepFalse - patterns
+identity PASS: per-arm excess sums to total excess
+identity PASS: per-arm keepFalse sums to total keepFalse
+integrity PASS: data/raw sha256 identical across all stages: 00a6a868e05a9ffe7382da51629f6d6dce88c5acfc945e79d314ebc78fd3a2c0
+[summary] reconciliation: 48/48 PASS, 0 FAIL
+[summary] ALL RECONCILIATION CHECKS PASS

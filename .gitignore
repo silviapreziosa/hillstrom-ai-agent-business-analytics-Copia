@@ -1,0 +1,31 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# OS / editor artifacts
+.DS_Store
+
+# Secrets and credentials
+.env
+.env.*
+*.key
+*.pem
+id_rsa*
+*secret*
+*credential*
+
+# Temporary files
+*.tmp
+*~
+
+# Raw data is NOT published (Option B, approved 2026-11-12):
+# its SHA-256 and provenance are recorded in README.md instead.
+# Redistribution rights are not claimed until independently verified.
+data/raw/*.csv

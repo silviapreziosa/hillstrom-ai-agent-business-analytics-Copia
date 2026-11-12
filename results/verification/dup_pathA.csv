@@ -1,0 +1,58 @@
+metric,value
+S1.n.Mens E-Mail,21307.0
+S1.mean.visit.Mens E-Mail,0.18275684047496127
+S1.mean.conversion.Mens E-Mail,0.01253109306800582
+S1.mean.spend.Mens E-Mail,1.422616511005773
+S1.n.No E-Mail,21306.0
+S1.mean.visit.No E-Mail,0.10616727682343002
+S1.mean.conversion.No E-Mail,0.005726086548390125
+S1.mean.spend.No E-Mail,0.6527893551112361
+S1.n.Womens E-Mail,21387.0
+S1.mean.visit.Womens E-Mail,0.151400383410483
+S1.mean.conversion.Womens E-Mail,0.008837144059475383
+S1.mean.spend.Womens E-Mail,1.0772015710478329
+S1.contrast.visit.MensMinusNo,0.07658956365153125
+S1.contrast.conversion.MensMinusNo,0.006805006519615695
+S1.contrast.spend.MensMinusNo,0.7698271558945368
+S2.n.Mens E-Mail,19183.0
+S2.mean.visit.Mens E-Mail,0.19392170150654225
+S2.mean.conversion.Mens E-Mail,0.013918573737163114
+S2.mean.spend.Mens E-Mail,1.5801329301986136
+S2.n.No E-Mail,19081.0
+S2.mean.visit.No E-Mail,0.1151931240501022
+S2.mean.conversion.No E-Mail,0.0063937948744824695
+S2.mean.spend.No E-Mail,0.7289099103820555
+S2.n.Womens E-Mail,19174.0
+S2.mean.visit.Womens E-Mail,0.16084280796912487
+S2.mean.conversion.Womens E-Mail,0.00985709815374987
+S2.mean.spend.Womens E-Mail,1.2015286325232086
+S2.contrast.visit.MensMinusNo,0.07872857745644006
+S2.contrast.conversion.MensMinusNo,0.007524778862680644
+S2.contrast.spend.MensMinusNo,0.851223019816558
+Delta.visit.MensMinusNo,0.0021390138049088153
+Delta.conversion.MensMinusNo,0.0007197723430649493
+Delta.spend.MensMinusNo,0.08139586392202125
+book.total,64000.0
+book.unique,57438.0
+book.excess,6562.0
+book.keepFalse,7634.0
+book.patterns,1072.0
+book.dups.visit1,622.0
+book.dups.conv1,0.0
+book.dups.spendpos,0.0
+book.keepFalse.arm.Mens E-Mail,2504.0
+book.excess.arm.Mens E-Mail,2124.0
+book.keepFalse.arm.No E-Mail,2555.0
+book.excess.arm.No E-Mail,2225.0
+book.keepFalse.arm.Womens E-Mail,2575.0
+book.excess.arm.Womens E-Mail,2213.0
+funnel.visitors,9394.0
+funnel.conversions,578.0
+funnel.bad_spend_noconv,0.0
+funnel.bad_conv_novisit,0.0
+SE.S1.visit,0.0033858083545245127
+SE.S1.conversion,0.000920851175531638
+SE.S1.spend,0.14524656024868676
+SE.S2.visit,0.003672915544473172
+SE.S2.conversion,0.0010239207905612566
+SE.S2.spend,0.1615358190297501
