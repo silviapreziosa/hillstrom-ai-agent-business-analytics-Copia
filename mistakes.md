@@ -415,3 +415,60 @@ first recorded, not verified against an external pre-existing hash.
 - **Logged via:** results/logs/main-analysis-2026-11-18__06_balance_and_robustness
   .20261118T133537Z.txt, `.20261118T133635Z.txt`, and the 08 logs
   `.20261118T133621Z.txt`, `.20261118T133639Z.txt` (exit 0 each).
+
+---
+
+## Documentation update (2026-11-18) — attribution, entry-4 closure, README gap
+
+This section is **append-only**: no earlier entry, quote, number, or verdict in
+this file has been altered. It records clarifications required before
+publication.
+
+### Attribution clarification
+
+- The labels "professor review" in the 2026-11-05 entries record
+  **human-directed review rounds** — project-owner oversight and accept/reject
+  decisions. The **computational authorship** of the recomputations performed
+  in those rounds is not documented. This file does not claim that the
+  professor personally performed, typed, or independently re-derived any
+  calculation.
+- The two audit reports in `results/analysis/human_verification/` are
+  **separate AI computational audits**. Their model and author identities are unrecorded.
+  They are not a human audit and are not described as one.
+- The duplicate-row instrument controls and VT-1…VT-10 are **agent-authored
+  automated verification**. Agreement between two agent-written calculation
+  paths rules out coding slips; it does not establish independence.
+- **No fully independent human audit has been completed.**
+  `VERIFICATION_PROTOCOL.md` Stages 1–3 remain pending.
+- No verified AI model identity, prompt log, or model-call timestamp record
+  exists; see `MODEL_USE_DISCLOSURE.md` for the verified / reported / unknown
+  tiers.
+
+### Entry 4 closure — "36,288 covariate cells"
+
+- The number **36,288 is withdrawn**. The stated factors multiply to **13,608**
+  using the three observed mens/womens combinations, or **18,144** with a
+  hypothetical fourth combination.
+- **No replacement recomputation is recorded.** The number was never used in
+  any analysis, table, or reported estimate.
+- Status: **closed as a withdrawn unsupported number**. The re-test column
+  remains "none recorded" rather than "PASS"; this is a resolved
+  documentation item, not a verified numerical result.
+
+### README documentation gap
+
+- The pre-existing `README.md` sentence "`plan.md` is intentionally empty until
+  the analysis plan is approved" was stale. `plan.md` v1.1 was approved in
+  commit `7f6b11c` (2026-11-12), and the main analysis was executed afterwards.
+- The sentence has been replaced in the 2026-11-18 documentation commit. This
+  gap was not previously recorded in `mistakes.md`; it is a repository
+  documentation defect, not an analysis error, and is not counted among the
+  21 confirmed error items.
+
+### Classification note
+
+The earlier §R3 "Classification index" was a preliminary grouping. The
+authoritative, non-overlapping classification and the checked totals
+(21 confirmed error items + 2 methodological ambiguities = 23 documented
+items) are in `docs/error_taxonomy.md`. Items are counted once by primary
+category; cross-references are not double-counted.
