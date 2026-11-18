@@ -23,6 +23,7 @@ verify about its own work.
 | `MODEL_USE_DISCLOSURE.md` | What is known / reported / unknown about the AI models |
 | `VERIFICATION_PROTOCOL.md` | Pending human blinded-verification protocol |
 | `AGENTS.md` | The 14 governing rules |
+| [docs/repeatability_evaluation.md](docs/repeatability_evaluation.md) | Fresh-session repeatability test: six reproduced ITT estimates, methodological review, and documented limitations |
 
 ---
 
