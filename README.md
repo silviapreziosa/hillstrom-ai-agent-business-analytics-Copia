@@ -56,8 +56,8 @@ the agent's own checks. No fully independent human audit has been completed;
 non-overlapping categories (2 statistical, 8 verification-design, 6
 coding/execution, 2 tooling/reproducibility, 4 reporting/interpretation), plus
 2 methodological ambiguities. No correction changed a final reported estimate,
-standard error, confidence interval, or p-value; the two correction commits
-were verified byte-identical on all substantive CSVs. The errors are catalogued in `mistakes.md` and indexed in
+standard error, confidence interval, or p-value; the M6, M8, and M10
+corrections left every substantive statistical CSV byte-identical. The errors are catalogued in `mistakes.md` and indexed in
 `docs/error_taxonomy.md`.
 
 **Data privacy.** The raw dataset is **not** committed (approved Option B). Its
@@ -370,10 +370,12 @@ weighting dependence, and the descriptive status of `term2`.
 The R5 percentile intervals do not enclose the Welch intervals. In both arms
 their endpoints sit slightly higher while their widths are nearly identical, so
 they are best described as highly similar and substantially overlapping, not as
-bracketing. The generated `reconciliation_report.md` and its source line in
-`src/08_reconcile_and_report.py` still carry the earlier "bracket" wording;
-both are outside this documentation-only correction, and the sentence is
-superseded here (see `mistakes.md` §M10).
+bracketing. That wording is now used in the generated
+`reconciliation_report.md` and its source line in
+`src/08_reconcile_and_report.py`; the source correction and regeneration are
+preserved in commit `366b4af`. Re-running the report through `src/run.sh` left
+VT-1…VT-10 + INT at 11/11 PASS, and every substantive statistical CSV
+byte-identical (see `mistakes.md` §M10).
 
 ### E.4 What the results do and do not support
 
@@ -403,7 +405,8 @@ uses the label "independently verified" for the completed work.
 ### F.1 Layer 1 — agent-authored automated tests
 
 `src/08_reconcile_and_report.py` runs VT-1…VT-10 plus an integrity check (INT).
-Final run `.20261118T133639Z`: **11/11 PASS**.
+Final run `.20261118T143125Z` (run ID `m10-source-fix-2026-11-18`):
+**11/11 PASS**.
 
 | ID | What it checks | Verdict |
 |---|---|---|
@@ -471,7 +474,7 @@ validation.
 - Tag `v0.1-verification-baseline` (`7d0c9c5`): pre-analysis verification state.
 - Tag `pre-unit-label-fix` (`86eb4fe`): preserves the M6 labels verbatim.
 - Tag `pre-r3-interpretation-fix` (`f71ea24`): preserves the M8 claim verbatim.
-- `results/logs/exit_codes.csv`: 20 wrapper-era runs (16 exit 0, 4 exit 1),
+- `results/logs/exit_codes.csv`: 21 wrapper-era runs (17 exit 0, 4 exit 1),
   with timestamped logs and 3 preserved failure copies.
 - `git diff` between a pre-correction tag and the correction commit is the
   auditable record of exactly what changed.

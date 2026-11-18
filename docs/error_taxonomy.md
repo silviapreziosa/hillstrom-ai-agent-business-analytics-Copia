@@ -10,7 +10,7 @@ lettered item in the transparency log (a–c), or one `M`-numbered entry
 (M1–M10). Each item is assigned to **exactly one** primary category. Where an
 item also illustrates a second theme, that theme is noted, not counted again.
 
-**Date of this classification:** 2026-11-18 (revised the same day to add M10).
+**Date of this classification:** 2026-11-18 (revised the same day to add M10 and record its source fix).
 
 ---
 
@@ -427,16 +427,20 @@ evidence-management issues, not analysis errors, and are not added to the
   `robustness_bootstrap.csv` and `primary_results.csv`. This is not a
   completed human audit.
 - **Correction:** `README.md` §E.3 reworded; the small upward endpoint shift
-  and the absence of containment are stated, and the still-stale generated
-  `reconciliation_report.md` is flagged. No estimate, SE, CI or p-value
-  changed.
-- **Re-test:** direct endpoint arithmetic, re-checked against both CSVs. No
-  automated VT tests interval containment, so no PASS is claimed. Correcting
-  the generated report would require a `src/08` change and rerun, which was
-  outside this documentation-only correction.
+  and the absence of containment are stated. The same wording was subsequently
+  corrected at source in `src/08_reconcile_and_report.py`, and
+  `reconciliation_report.md` was regenerated in commit `366b4af`. No estimate,
+  SE, CI or p-value changed.
+- **Re-test:** direct endpoint arithmetic, re-checked against both CSVs. After
+  the source correction, `src/run.sh 08_reconcile_and_report.py
+  m10-source-fix-2026-11-18` regenerated the report (exit 0, log
+  `.20261118T143125Z`); VT-1…VT-10 + INT passed 11/11, and every substantive
+  statistical CSV was byte-identical to the previous commit. No individual VT
+  tests interval containment, so correctness of the sentence rests on the
+  endpoint arithmetic above.
 - **Evidence:** `mistakes.md` §M10; `robustness_bootstrap.csv`;
-  `primary_results.csv`; commit `e3ca0ea` (original wording); 2026-11-18
-  documentation correction commit.
+  `primary_results.csv`; original wording commit `e3ca0ea`; README correction
+  `3d10978`; source correction and regeneration `366b4af`.
 
 ---
 
@@ -534,5 +538,5 @@ Reference: `plan.md` §1, §7–§9; `results/analysis/reconciliation_report.md`
 | M7 | Tooling | `model_log.md` | `2f87409`, `30f1c5f` |
 | M8 | Reporting | audit 2; VT-10 | `f71ea24` / `pre-r3-interpretation-fix`; `30f1c5f` |
 | M9 | Verification design | VT-10 failure log | `30f1c5f` |
-| M10 | Reporting | `robustness_bootstrap.csv`; `primary_results.csv` | `e3ca0ea` (original wording); 2026-11-18 documentation correction |
+| M10 | Reporting | `robustness_bootstrap.csv`; `primary_results.csv` | `e3ca0ea` (original); `3d10978` (README); `366b4af` (source) |
 | R1 | Evidence loss (not an error) | `mistakes.md` §R1 | `9b02f0e` |
