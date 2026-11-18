@@ -60,6 +60,24 @@ def log_pipeline(event: str, rows: str) -> None:
         fh.write(f"{datetime.now(timezone.utc).isoformat()},05,{event},\"{rows}\"\n")
 
 
+def upsert_model_log(title: str, body: str) -> None:
+    """Idempotent model_log.md update: replace only this script's section.
+
+    Rerunning any single script must not destroy or duplicate sections
+    produced by another script (mistakes.md M7)."""
+    path = OUT / "model_log.md"
+    header = "# Model calls log (AGENTS.md rule 5)"
+    sections: dict[str, str] = {}
+    if path.exists():
+        for part in path.read_text(encoding="utf-8").split("\n## ")[1:]:
+            name, _, rest = part.partition("\n")
+            sections[name.strip()] = rest.strip("\n")
+    sections[title] = body.strip("\n")
+    text = header + "\n\n" + "\n\n".join(
+        f"## {name}\n{content}" for name, content in sorted(sections.items()))
+    path.write_text(text + "\n", encoding="utf-8")
+
+
 h_before = sha256_file(RAW)
 log_sha("before", h_before)
 
@@ -215,14 +233,13 @@ lines += [
 ]
 (OUT / "primary_results.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-(OUT / "model_log.md").write_text(
-    "# Model calls log (AGENTS.md rule 5)\n\n"
-    "- src/05_analysis_primary.py: NO statistical models fitted. Closed-form\n"
-    "  two-sample z-tests (proportions) and Welch t-test (spend) per plan.md §5.\n"
+upsert_model_log(
+    "src/05_analysis_primary.py",
+    "- NO statistical models fitted. Closed-form two-sample z-tests\n"
+    "  (proportions) and Welch t-test (spend) per plan.md §5.\n"
     "  Library calls: scipy.stats.norm.sf, scipy.stats.t.sf, scipy.stats.t.ppf.\n"
     "  Inputs: data/raw/hillstorm_no_indices.csv (read-only), all 64,000 rows.\n"
-    "  No randomness used; no seed required.\n",
-    encoding="utf-8")
+    "  No randomness used; no seed required.")
 
 h_after = sha256_file(RAW)
 log_sha("after", h_after)

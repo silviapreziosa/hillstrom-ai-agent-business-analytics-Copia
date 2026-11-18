@@ -12,3 +12,10 @@ script,run_id,timestamp_utc,exit_code
 08_reconcile_and_report.py,main-analysis-2026-11-18,20261118T132526Z,0
 06_balance_and_robustness.py,main-analysis-2026-11-18,20261118T132619Z,0
 08_reconcile_and_report.py,main-analysis-2026-11-18,20261118T132625Z,0
+05_analysis_primary.py,main-analysis-2026-11-18,20261118T133533Z,0
+06_balance_and_robustness.py,main-analysis-2026-11-18,20261118T133537Z,0
+08_reconcile_and_report.py,main-analysis-2026-11-18,20261118T133544Z,1
+08_reconcile_and_report.py,main-analysis-2026-11-18,20261118T133621Z,0
+05_analysis_primary.py,main-analysis-2026-11-18,20261118T133630Z,0
+06_balance_and_robustness.py,main-analysis-2026-11-18,20261118T133635Z,0
+08_reconcile_and_report.py,main-analysis-2026-11-18,20261118T133639Z,0

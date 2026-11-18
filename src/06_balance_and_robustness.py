@@ -63,6 +63,24 @@ def log_pipeline(event: str, rows: str) -> None:
         fh.write(f"{datetime.now(timezone.utc).isoformat()},06,{event},\"{rows}\"\n")
 
 
+def upsert_model_log(title: str, body: str) -> None:
+    """Idempotent model_log.md update: replace only this script's section.
+
+    Rerunning any single script must not destroy or duplicate sections
+    produced by another script (mistakes.md M7)."""
+    path = OUT / "model_log.md"
+    header = "# Model calls log (AGENTS.md rule 5)"
+    sections: dict[str, str] = {}
+    if path.exists():
+        for part in path.read_text(encoding="utf-8").split("\n## ")[1:]:
+            name, _, rest = part.partition("\n")
+            sections[name.strip()] = rest.strip("\n")
+    sections[title] = body.strip("\n")
+    text = header + "\n\n" + "\n\n".join(
+        f"## {name}\n{content}" for name, content in sorted(sections.items()))
+    path.write_text(text + "\n", encoding="utf-8")
+
+
 h_before = sha256_file(RAW)
 log_sha("before", h_before)
 
@@ -250,7 +268,9 @@ lines = [
     "Source: results/analysis/{balance.csv,balance_shares.csv,robustness.csv,",
     "robustness_transformations.csv,robustness_bh.csv,robustness_bootstrap.csv,",
     "funnel_descriptive.csv} — produced by src/06_balance_and_robustness.py.",
-    "All robustness analyses retain all 64,000 rows; no customer is deleted.",
+    "R2–R6 retain all 64,000 rows; no customer is deleted in those analyses.",
+    "The R1 deduplication illustration (cited from the verification artifacts)",
+    "deletes rows and is not an alternative estimate.",
     "",
     "## Balance (non-gating)",
     "",
@@ -270,6 +290,10 @@ lines = [
     "",
     "## R2 covariate-adjusted OLS (HC1) — approximate re-expression",
     "",
+    "Visit and conversion coefficients are probability-scale differences",
+    "(×100 = percentage points); spend coefficients are USD per randomized",
+    "customer. HC1 = heteroskedasticity-consistent standard errors.",
+    "",
     "| Model | Term | Estimate | HC1 SE | 95% CI | p |",
     "|---|---|---|---|---|---|",
 ]
@@ -281,11 +305,58 @@ lines += [
     "",
     "## R3 outcome transformations (no deletion)",
     "",
-    "| Pair | Analysis | Estimate |",
-    "|---|---|---|",
+    "### R3a — log1p(spend) Welch difference",
+    "",
+    "Values are differences in mean log1p(spend), in **log points** on the",
+    "log1p scale. This is a transformed-outcome estimand, not a percentage",
+    "change in arithmetic mean spending.",
+    "",
+    "| Pair | log1p diff (log points) | Welch SE | df | p |",
+    "|---|---|---|---|---|",
 ]
 for r in r3_rows:
-    lines.append(f"| {r['pair']} | {r['analysis']} | {r['estimate']:+.6f} |")
+    if r["analysis"].startswith("R3a"):
+        lines.append(f"| {r['pair']} | {r['estimate']:+.6f} | {r['se']:.6f} | "
+                     f"{r['df']:.1f} | {r['p_value']:.3g} |")
+lines += [
+    "",
+    "### R3b — exact two-part decomposition of the mean-spend difference",
+    "",
+    "Arithmetic identity with midpoint weights (plan.md §8):",
+    "",
+    "    ΔE[spend] = ΔP(conversion) × (m1 + m0)/2 + ((p1 + p0)/2) × (m1 − m0)",
+    "",
+    "where p_a is the conversion probability and m_a the mean spend among",
+    "converters in arm a. term1 is the conversion-rate component; term2 is the",
+    "conditional-spend component. Components are USD per randomized customer;",
+    "each share is component / total × 100.",
+    "",
+    "This is an arithmetic identity, not a causal mediation analysis. term2,",
+    "and the weights used in both components, condition on a post-treatment",
+    "outcome (conversion); those quantities are descriptive only (plan.md",
+    "§8, §9). The ITT effects on total mean spending and on conversion",
+    "probability are causal under randomization, but the split into components",
+    "does not separately identify causal mechanisms. The shares depend on the",
+    "weighting convention: midpoint weights are the plan choice, and",
+    "control-side or treated-side weights give different shares for the same",
+    "total.",
+    "",
+    "| Pair | Component | Value (USD per randomized customer) | Share of total |",
+    "|---|---|---|---|",
+]
+for t_arm, c_arm in PAIRS:
+    pair = f"{t_arm} minus {c_arm}"
+    comp = {r["analysis"]: r["estimate"] for r in r3_rows if r["pair"] == pair}
+    term1 = comp["R3b two-part: term1 Δconv × avg converter spend"]
+    term2 = comp["R3b two-part: term2 avg conv rate × Δ converter spend"]
+    total = comp["R3b two-part: total (identity check)"]
+    for label, val in (
+        ("term1: ΔP(conversion) × average converter spend", term1),
+        ("term2: average conversion rate × Δ(mean spend among converters)", term2),
+        ("total: ITT effect on mean spending (identity check)", total),
+    ):
+        lines.append(f"| {pair} | {label} | {val:+.6f} | "
+                     f"{100.0 * val / total:+.1f}% |")
 lines += [
     "",
     "## R4 Benjamini-Hochberg (beside Holm)",
@@ -330,16 +401,16 @@ lines += [
 ]
 (OUT / "robustness.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-with open(OUT / "model_log.md", "a", encoding="utf-8") as fh:
-    fh.write(
-        "\n## src/06_balance_and_robustness.py\n"
-        "- R2: statsmodels OLS (HC1), n=64,000, design = intercept + treat_mens\n"
-        "  + treat_womens + recency + history + mens + womens + newbie +\n"
-        "  zip dummies (drop_first) + channel dummies (drop_first); outcomes:\n"
-        "  visit, conversion, spend. Labeled approximate re-expression of ITT\n"
-        "  contrasts (plan.md §8 R2). No randomness.\n"
-        "- R3: closed-form Welch on log1p(spend); exact two-part decomposition.\n"
-        "- R5: numpy default_rng(42), 10,000 arm-stratified resamples per pair.\n")
+upsert_model_log(
+    "src/06_balance_and_robustness.py",
+    "- R2: statsmodels OLS (HC1), n=64,000, design = intercept + treat_mens\n"
+    "  + treat_womens + recency + history + mens + womens + newbie +\n"
+    "  zip dummies (drop_first) + channel dummies (drop_first); outcomes:\n"
+    "  visit, conversion, spend. Labeled approximate re-expression of ITT\n"
+    "  contrasts (plan.md §8 R2). No randomness.\n"
+    "- R3: closed-form Welch on log1p(spend); exact two-part decomposition\n"
+    "  (arithmetic identity with midpoint weights; no causal mediation).\n"
+    "- R5: numpy default_rng(42), 10,000 arm-stratified resamples per pair.\n")
 
 h_after = sha256_file(RAW)
 log_sha("after", h_after)

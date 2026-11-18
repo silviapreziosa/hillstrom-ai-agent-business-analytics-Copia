@@ -324,5 +324,94 @@ first recorded, not verified against an external pre-existing hash.
 - **Retest:** 06 and 08 rerun sequentially; model_log.md again contains both
   sections; VT-1..VT-9 + INT all PASS; CSVs byte-identical to tag
   `pre-unit-label-fix`.
+- **Update (2026-11-18, M8 correction):** the operational rule is now enforced
+  in code: 05 and 06 both use an idempotent `upsert_model_log()` that replaces
+  only their own section. Verified by rerunning 05 alone (the 06 section
+  survives, 1 copy) and then 06 alone (no duplicate section is created).
 - **Logged via:** the 2026-11-18 run logs for 06 and 08 in results/logs/ and
   results/logs/exit_codes.csv.
+
+### M9. VT-10 negative control was case-sensitive (test-construction defect; first 08 run failed)
+
+- **Original behavior (verbatim from run log
+  `.20261118T133544Z`):** `FAIL  VT-10: R3 decomposition: recomputation,
+  shares, caveats, negative controls — negative control not detected`
+  (exit 1; failure copy preserved).
+- **Cause:** the negative control removed the required caveat with
+  `r3_md.replace("arithmetic identity", "")`, which is case-sensitive. The
+  R3 section contains both "Arithmetic identity with midpoint weights"
+  (heading sentence) and "This is an arithmetic identity", so the phrase
+  survived the removal, the caveat checker correctly found nothing missing,
+  and the negative control returned False. All substantive VT-10 checks
+  (recomputation, identity, shares) had already passed.
+- **Correction:** the negative control now uses a case-insensitive regex
+  substitution before re-running the same caveat checker.
+- **Retest:** PASSED — rerun `.20261118T133621Z` exited 0 with VT-10 PASS
+  (11/11 overall); the followed-up full sequence `.20261118T133639Z` also
+  11/11 PASS. All substantive VT-10 checks had already passed before the fix;
+  only the negative-control construction changed.
+- **Logged via:** results/logs/main-analysis-2026-11-18__08_reconcile_and_report
+  .20261118T133544Z.txt and timestamped failure copy (exit code 1 in
+  results/logs/exit_codes.csv).
+
+### M8. R3 two-part decomposition: causal overreach and missing descriptive caveat
+    (interpretation/reporting error; identified by robustness audit 2026-11-18)
+
+- **Original erroneous statement (verbatim):** agent's final report message to
+  the professor, 2026-11-12 (previously unsaved; now preserved verbatim in
+  results/analysis/human_verification/agent_report_claim_evidence_2026-11-12.md):
+  "converter-spend differences are essentially zero (−$0.0043 / +$0.0575) —
+  the spend effect is driven by more converters, not higher spend per
+  converter (`robustness_transformations.csv`, descriptive decomposition)."
+  Related artifact wording (results/analysis/robustness.md pre-correction):
+  "term1 Δconv × avg converter spend" / "term2 avg conv rate × Δ converter
+  spend", with no identity statement and no "second term descriptive" caveat
+  required by plan.md §8.
+- **Independent audit evidence:** independent_robustness_audit.md:
+  "The two-part decomposition is an arithmetic identity, not a causal
+  mediation analysis. Mean spend among converters conditions on a
+  post-treatment outcome; these groups need not be comparable under
+  randomization." The audit reproduced every number (OLS coefficients/SEs/CIs,
+  log1p Welch tests, decomposition terms) at floating-point precision and
+  reported: Womens conditional-spend difference +$7.892057 contributing
+  +$0.057467 (≈13.5% of the +$0.424412 total; midpoint weights; ≈16.4% under
+  control-side weights; Mens ≈−0.6%). Therefore "essentially zero" is valid
+  only for Mens, and "not higher spend per converter" is incorrect for
+  Womens. No numerical error existed: the defect was interpretive.
+- **Root cause:** the agent read an exact arithmetic decomposition of a
+  randomized total as a causal mechanism split ("driven by"), used the
+  plan's midpoint weighting without disclosing weighting sensitivity, and
+  omitted the plan-mandated statement that the conditional-spend term is
+  descriptive (post-treatment conditioning).
+- **Correction:** robustness.md R3 rewritten: explicit formula
+  ΔE[spend] = ΔP(conversion) × (m1 + m0)/2 + ((p1 + p0)/2) × (m1 − m0);
+  component definitions with units (USD per randomized customer) and
+  share-of-total percentages; "arithmetic identity, not a causal mediation
+  analysis" statement; post-treatment descriptive caveat; weighting-convention
+  note. R2 table units labeled; R1 scope clarified ("R2–R6 retain all rows").
+  reconciliation_report.md summary now compares quantities only on their own
+  scales. No estimate, SE, CI or p-value changed: all substantive statistical
+  CSVs are byte-identical to the pre-correction snapshot (tags
+  `pre-r3-interpretation-fix`).
+- **Test results:** VT-10 executed in the 08 runs `.20261118T133621Z` and
+  `.20261118T133639Z`: PASS. It independently recomputes term1/term2/total
+  from data/raw (agreement ≤1e-9), verifies term1+term2=total, checks the six
+  displayed values and percentage shares (tolerance 5e-7 and 0.1 pp), requires
+  the caveat phrases, rejects R3-specific mechanism language ("driven by",
+  "attributable to", "mediated by", "because of the email") inside the R3
+  section only, and runs negative controls (missing caveat, mechanism
+  sentence, wrong share) — all detected. VT-1..VT-9 + INT remain PASS
+  (11/11). Language checks are supplementary and are not proof of correct
+  causal reasoning.
+- **Remaining limitations:** the audit is a separate computational review,
+  not a full independent human audit; it did not cover balance, BH, bootstrap,
+  funnel, R1, or causal assumptions. Shares remain weighting-convention
+  dependent (midpoint weights are the plan choice). VT-10 tests the generated
+  R3 section, not manually written text or reasoning quality. Human blinded
+  review (VERIFICATION_PROTOCOL.md) is still pending.
+- **Preservation:** original wording is in Commit C (`f71ea24`, annotated tag
+  `pre-r3-interpretation-fix`) as the dated evidence record; the correction is
+  a separate commit, so the pre/post difference is auditable in Git.
+- **Logged via:** results/logs/main-analysis-2026-11-18__06_balance_and_robustness
+  .20261118T133537Z.txt, `.20261118T133635Z.txt`, and the 08 logs
+  `.20261118T133621Z.txt`, `.20261118T133639Z.txt` (exit 0 each).

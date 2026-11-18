@@ -3,7 +3,9 @@
 Source: results/analysis/{balance.csv,balance_shares.csv,robustness.csv,
 robustness_transformations.csv,robustness_bh.csv,robustness_bootstrap.csv,
 funnel_descriptive.csv} — produced by src/06_balance_and_robustness.py.
-All robustness analyses retain all 64,000 rows; no customer is deleted.
+R2–R6 retain all 64,000 rows; no customer is deleted in those analyses.
+The R1 deduplication illustration (cited from the verification artifacts)
+deletes rows and is not an alternative estimate.
 
 ## Balance (non-gating)
 
@@ -23,6 +25,10 @@ alternative treatment-effect estimate.
 
 ## R2 covariate-adjusted OLS (HC1) — approximate re-expression
 
+Visit and conversion coefficients are probability-scale differences
+(×100 = percentage points); spend coefficients are USD per randomized
+customer. HC1 = heteroskedasticity-consistent standard errors.
+
 | Model | Term | Estimate | HC1 SE | 95% CI | p |
 |---|---|---|---|---|---|
 | OLS visit (HC1) | treat_mens | +0.076017 | 0.003338 | [+0.069474, +0.082559] | 8.49e-115 |
@@ -34,16 +40,46 @@ alternative treatment-effect estimate.
 
 ## R3 outcome transformations (no deletion)
 
-| Pair | Analysis | Estimate |
-|---|---|---|
-| Mens E-Mail minus No E-Mail | R3a log1p(spend) Welch diff | +0.029241 |
-| Mens E-Mail minus No E-Mail | R3b two-part: term1 Δconv × avg converter spend | +0.774170 |
-| Mens E-Mail minus No E-Mail | R3b two-part: term2 avg conv rate × Δ converter spend | -0.004343 |
-| Mens E-Mail minus No E-Mail | R3b two-part: total (identity check) | +0.769827 |
-| Womens E-Mail minus No E-Mail | R3a log1p(spend) Welch diff | +0.014209 |
-| Womens E-Mail minus No E-Mail | R3b two-part: term1 Δconv × avg converter spend | +0.366945 |
-| Womens E-Mail minus No E-Mail | R3b two-part: term2 avg conv rate × Δ converter spend | +0.057467 |
-| Womens E-Mail minus No E-Mail | R3b two-part: total (identity check) | +0.424412 |
+### R3a — log1p(spend) Welch difference
+
+Values are differences in mean log1p(spend), in **log points** on the
+log1p scale. This is a transformed-outcome estimand, not a percentage
+change in arithmetic mean spending.
+
+| Pair | log1p diff (log points) | Welch SE | df | p |
+|---|---|---|---|---|
+| Mens E-Mail minus No E-Mail | +0.029241 | 0.004105 | 37756.1 | 1.08e-12 |
+| Womens E-Mail minus No E-Mail | +0.014209 | 0.003728 | 40717.7 | 0.000138 |
+
+### R3b — exact two-part decomposition of the mean-spend difference
+
+Arithmetic identity with midpoint weights (plan.md §8):
+
+    ΔE[spend] = ΔP(conversion) × (m1 + m0)/2 + ((p1 + p0)/2) × (m1 − m0)
+
+where p_a is the conversion probability and m_a the mean spend among
+converters in arm a. term1 is the conversion-rate component; term2 is the
+conditional-spend component. Components are USD per randomized customer;
+each share is component / total × 100.
+
+This is an arithmetic identity, not a causal mediation analysis. term2,
+and the weights used in both components, condition on a post-treatment
+outcome (conversion); those quantities are descriptive only (plan.md
+§8, §9). The ITT effects on total mean spending and on conversion
+probability are causal under randomization, but the split into components
+does not separately identify causal mechanisms. The shares depend on the
+weighting convention: midpoint weights are the plan choice, and
+control-side or treated-side weights give different shares for the same
+total.
+
+| Pair | Component | Value (USD per randomized customer) | Share of total |
+|---|---|---|---|
+| Mens E-Mail minus No E-Mail | term1: ΔP(conversion) × average converter spend | +0.774170 | +100.6% |
+| Mens E-Mail minus No E-Mail | term2: average conversion rate × Δ(mean spend among converters) | -0.004343 | -0.6% |
+| Mens E-Mail minus No E-Mail | total: ITT effect on mean spending (identity check) | +0.769827 | +100.0% |
+| Womens E-Mail minus No E-Mail | term1: ΔP(conversion) × average converter spend | +0.366945 | +86.5% |
+| Womens E-Mail minus No E-Mail | term2: average conversion rate × Δ(mean spend among converters) | +0.057467 | +13.5% |
+| Womens E-Mail minus No E-Mail | total: ITT effect on mean spending (identity check) | +0.424412 | +100.0% |
 
 ## R4 Benjamini-Hochberg (beside Holm)
 

@@ -1,13 +1,13 @@
 # Reconciliation and final analysis report (plan.md §10–§12)
 
-Run date: 2026-11-18T13:26:26.195709+00:00
+Run date: 2026-11-18T13:36:39.516503+00:00
 data/raw SHA-256 (all runs identical): 00a6a868e05a9ffe7382da51629f6d6dce88c5acfc945e79d314ebc78fd3a2c0
 
-## VT-1..VT-9 + integrity results
+## VT-1..VT-10 + integrity results
 
 | ID | Check | Verdict | Detail |
 |---|---|---|---|
-| VT-1 | row-count integrity; no silent drops/filters | PASS | 18 pipeline events; source scan clean; all 64,000 rows retained |
+| VT-1 | row-count integrity; no silent drops/filters | PASS | 30 pipeline events; source scan clean; all 64,000 rows retained |
 | VT-2 | spend identity mean = P(conv) x mean|conv (per arm) | PASS | identity holds to 1e-9 for all three arms |
 | VT-3 | second-path recomputation of six contrasts | PASS | max |05-07| deviation = 3.331e-16 (tolerance 1e-9) |
 | VT-4 | Holm envelope recomputed from raw p-values | PASS | agreement to 1e-12 across 6 adjusted p-values |
@@ -16,7 +16,8 @@ data/raw SHA-256 (all runs identical): 00a6a868e05a9ffe7382da51629f6d6dce88c5acf
 | VT-7 | language audit of write-up artifacts | PASS | 0 forbidden phrases in model_log.md, primary_results.md, reconciliation_report.md, robustness.md |
 | VT-8 | write-up numbers reconcile with primary_results.csv | PASS | 6 md estimates matched to CSV within rounding (5e-7) |
 | VT-9 | unit/scale consistency: pp = 100 x probability difference | PASS | 6 table rows + 6 report lines verified (point estimates and CIs); negative control (original '+0.076590 pp' label) detected |
-| INT | data/raw sha256 constant across all analysis runs | PASS | 13 log rows, digest 00a6a868e05a9ffe... |
+| VT-10 | R3 decomposition: recomputation, shares, caveats, negative controls | PASS | fresh recomputation matches CSV (1e-9); term1+term2=total; 6 md values and shares verified; required caveats present; mechanism phrases absent from R3; negative controls detected (language checks are supplementary, not proof of causal reasoning) |
+| INT | data/raw sha256 constant across all analysis runs | PASS | 21 log rows, digest 00a6a868e05a9ffe... |
 
 ## Units used in this report
 
@@ -64,9 +65,18 @@ claimed.
 
 ## Robustness summary (full detail: 06 artifacts + robustness.md)
 
-- R2 adjusted OLS (HC1) and R3 transformations are consistent with the
-  primary contrasts in sign and order of magnitude (robustness.csv,
-  robustness_transformations.csv).
+- R2 adjusted OLS (HC1) reproduces the primary contrasts in sign and size
+  on each outcome's own scale (probability scale for visit/conversion;
+  USD for spend) (robustness.csv). Quantities on different scales are not
+  compared with each other.
+- R3a reports a log1p(spend) difference in log points; this is not
+  comparable in magnitude to the dollar contrasts (robustness_transformations.csv).
+- R3b is an exact arithmetic identity with midpoint weights: term1
+  (ΔP(conversion) × average converter spend) and term2 (average conversion
+  rate × Δ(mean spend among converters)) sum to the mean-spend difference.
+  Components are USD per randomized customer and their shares depend on
+  the weighting convention. term2 conditions on post-treatment conversion
+  and is descriptive only; the split does not identify causal mechanisms.
 - R4: BH-FDR conclusions agree with Holm FWER (robustness_bh.csv).
 - R5: bootstrap percentile CIs bracket the Welch CIs (robustness_bootstrap.csv).
 - R1: deduplication remains an illustration of a potentially invalid

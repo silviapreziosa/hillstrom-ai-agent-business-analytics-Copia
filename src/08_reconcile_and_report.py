@@ -346,6 +346,120 @@ overall &= add_vt(
     "negative control (original '+0.076590 pp' label) detected"
     if ok9 else "; ".join(fail9[:6]))
 
+# ---------------- VT-10: R3 decomposition integrity + caveats ------------------
+r3csv = list(csv.DictReader(open(OUT / "robustness_transformations.csv",
+                                 newline="", encoding="utf-8")))
+
+
+def r3_components(pair: str):
+    comp = {r["analysis"]: float(r["estimate"]) for r in r3csv
+            if r["pair"] == pair}
+    return (comp["R3b two-part: term1 Δconv × avg converter spend"],
+            comp["R3b two-part: term2 avg conv rate × Δ converter spend"],
+            comp["R3b two-part: total (identity check)"])
+
+
+REQUIRED_R3 = ["arithmetic identity", "not a causal mediation analysis",
+               "descriptive", "USD per randomized customer",
+               "weighting convention", "(m1 + m0)/2"]
+MECH = ["driven by", "attributable to", "mediated by", "because of the email"]
+
+
+def caveat_errors(text: str) -> list[str]:
+    low = text.lower()
+    return [p for p in REQUIRED_R3 if p.lower() not in low]
+
+
+def mech_errors(text: str) -> list[str]:
+    low = text.lower()
+    return [p for p in MECH if p in low]
+
+
+def share_error(pair: str, kind: str, shown_pct: float) -> bool:
+    c1, c2, ct = r3_components(pair)
+    comp_val = {"term1": c1, "term2": c2, "total": ct}[kind]
+    return abs(shown_pct - 100.0 * comp_val / ct) > 0.1
+
+
+fail10: list[str] = []
+# (a) fresh recomputation of both components from data/raw
+for t_arm, c_arm in ((MEN, NOE), (WOM, NOE)):
+    pair = f"{t_arm} minus {c_arm}"
+    s1 = df.loc[df["segment"] == t_arm]
+    s0 = df.loc[df["segment"] == c_arm]
+    p1, p0 = float(s1["conversion"].mean()), float(s0["conversion"].mean())
+    m1 = float(s1.loc[s1["conversion"] == 1, "spend"].mean())
+    m0 = float(s0.loc[s0["conversion"] == 1, "spend"].mean())
+    t1 = (p1 - p0) * (m1 + m0) / 2.0
+    t2 = ((p1 + p0) / 2.0) * (m1 - m0)
+    tot = p1 * m1 - p0 * m0
+    c1, c2, ct = r3_components(pair)
+    if abs(t1 - c1) > 1e-9:
+        fail10.append(f"{pair}: term1 recomputation mismatch")
+    if abs(t2 - c2) > 1e-9:
+        fail10.append(f"{pair}: term2 recomputation mismatch")
+    if abs(tot - ct) > 1e-9:
+        fail10.append(f"{pair}: total recomputation mismatch")
+    if abs(c1 + c2 - ct) > 1e-9:
+        fail10.append(f"{pair}: term1+term2 != total")
+
+# (b) md decomposition table: displayed values and shares
+rob_text = (OUT / "robustness.md").read_text(encoding="utf-8")
+r3_md = rob_text[rob_text.index("## R3"):rob_text.index("## R4")]
+md10: list[tuple[str, str, float, float]] = []
+for line in r3_md.splitlines():
+    s = line.strip()
+    if not s.startswith("|"):
+        continue
+    cells = [c.strip() for c in s.split("|")]
+    if len(cells) < 6:
+        continue
+    label = cells[2]
+    kind = "term1" if label.startswith("term1") else (
+        "term2" if label.startswith("term2") else (
+            "total" if label.startswith("total") else ""))
+    if kind:
+        md10.append((cells[1], kind, float(cells[3]),
+                     float(cells[4].rstrip("%"))))
+if len(md10) != 6:
+    fail10.append(f"md decomposition rows = {len(md10)} (expected 6)")
+for pair, kind, val, shown in md10:
+    c1, c2, ct = r3_components(pair)
+    comp_val = {"term1": c1, "term2": c2, "total": ct}[kind]
+    if abs(val - comp_val) > 5e-7:
+        fail10.append(f"{pair}/{kind}: md value mismatch")
+    if share_error(pair, kind, shown):
+        fail10.append(f"{pair}/{kind}: md share {shown:+.1f}% inconsistent")
+
+# (c) required caveats present in the R3 section
+fail10 += [f"missing required caveat '{p}'" for p in caveat_errors(r3_md)]
+
+# (d) R3-specific mechanism language (not a global phrase ban)
+fail10 += [f"mechanism phrase '{p}' in R3 section" for p in mech_errors(r3_md)]
+
+# (e) negative controls: the same checkers must flag missing/wrong text
+neg_ok = (
+    bool(caveat_errors(re.sub(r"arithmetic\s+identity", "", r3_md,
+                              flags=re.IGNORECASE)))
+    and bool(mech_errors(r3_md + " the effect is driven by more conversions."))
+    and share_error("Mens E-Mail minus No E-Mail", "term2", 50.0)
+    and not share_error("Mens E-Mail minus No E-Mail", "term1",
+                        100.0 * r3_components("Mens E-Mail minus No E-Mail")[0]
+                        / r3_components("Mens E-Mail minus No E-Mail")[2])
+)
+if not neg_ok:
+    fail10.append("negative control not detected")
+
+ok10 = len(fail10) == 0
+overall &= add_vt(
+    "VT-10", "R3 decomposition: recomputation, shares, caveats, negative controls",
+    ok10,
+    "fresh recomputation matches CSV (1e-9); term1+term2=total; 6 md values "
+    "and shares verified; required caveats present; mechanism phrases absent "
+    "from R3; negative controls detected (language checks are supplementary, "
+    "not proof of causal reasoning)"
+    if ok10 else "; ".join(fail10[:6]))
+
 # ---------------- integrity: sha logs ------------------------------------------
 sha_rows = list(csv.DictReader(open(OUT / "sha256_log.csv", newline="", encoding="utf-8")))
 digests = {r["sha256"] for r in sha_rows}
@@ -361,7 +475,7 @@ report = [
     f"Run date: {datetime.now(timezone.utc).isoformat()}",
     f"data/raw SHA-256 (all runs identical): {h_now}",
     "",
-    "## VT-1..VT-9 + integrity results",
+    "## VT-1..VT-10 + integrity results",
     "",
     "| ID | Check | Verdict | Detail |",
     "|---|---|---|---|",
@@ -411,9 +525,18 @@ report += [
     "",
     "## Robustness summary (full detail: 06 artifacts + robustness.md)",
     "",
-    "- R2 adjusted OLS (HC1) and R3 transformations are consistent with the",
-    "  primary contrasts in sign and order of magnitude (robustness.csv,",
-    "  robustness_transformations.csv).",
+    "- R2 adjusted OLS (HC1) reproduces the primary contrasts in sign and size",
+    "  on each outcome's own scale (probability scale for visit/conversion;",
+    "  USD for spend) (robustness.csv). Quantities on different scales are not",
+    "  compared with each other.",
+    "- R3a reports a log1p(spend) difference in log points; this is not",
+    "  comparable in magnitude to the dollar contrasts (robustness_transformations.csv).",
+    "- R3b is an exact arithmetic identity with midpoint weights: term1",
+    "  (ΔP(conversion) × average converter spend) and term2 (average conversion",
+    "  rate × Δ(mean spend among converters)) sum to the mean-spend difference.",
+    "  Components are USD per randomized customer and their shares depend on",
+    "  the weighting convention. term2 conditions on post-treatment conversion",
+    "  and is descriptive only; the split does not identify causal mechanisms.",
     "- R4: BH-FDR conclusions agree with Holm FWER (robustness_bh.csv).",
     "- R5: bootstrap percentile CIs bracket the Welch CIs (robustness_bootstrap.csv).",
     "- R1: deduplication remains an illustration of a potentially invalid",

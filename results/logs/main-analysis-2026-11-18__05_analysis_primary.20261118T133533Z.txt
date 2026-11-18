@@ -1,0 +1,4 @@
+[rule 2] load: 64000 rows (data/raw untouched; no filters applied)
+[rule 2] split by segment (no rows dropped): 21307/21306/21387 (sum 64000 = 64000)
+[integrity] data/raw SHA-256 unchanged: 00a6a868e05a9ffe7382da51629f6d6dce88c5acfc945e79d314ebc78fd3a2c0
+[done] six primary contrasts computed; wrote primary_results.csv, raw_pvalues.csv, primary_results.md
