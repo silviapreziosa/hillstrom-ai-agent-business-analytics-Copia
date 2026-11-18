@@ -166,17 +166,35 @@ lines = [
     "Sample: all 64,000 randomized rows (21,307 / 21,306 / 21,387). No rows dropped.",
     "Causal scope: effects of ASSIGNMENT under randomized assignment (plan.md §9).",
     "",
-    "| Contrast | Outcome | Estimate | 95% CI | z/t (df) | raw p | Holm p | Sig (Holm 0.05) | Relative uplift |",
+    "## Units (read before quoting numbers)",
+    "",
+    "- Visit and conversion effects are **probability differences** on the 0–1 scale; the",
+    "  same quantity multiplied by 100 is given in **percentage points** (pp). These are",
+    "  absolute risk differences, not relative changes.",
+    "- Relative uplift is a **relative percentage** change (arm mean / control mean − 1);",
+    "  it is a different quantity from percentage points and from probability differences.",
+    "- Spend effects are **dollar differences in mean spending per randomized customer**",
+    "  (USD), not percentage points.",
+    "",
+    "| Contrast | Outcome | Estimate | 95% CI | z/t (df) | raw p | Holm p | Sig (Holm 0.05) | Relative uplift (relative %) |",
     "|---|---|---|---|---|---|---|---|---|",
 ]
 for r in results:
     stat = (f"t={r['test_stat']:.3f} (df={r['df']:.1f})" if r["outcome"] == "spend"
             else f"z={r['test_stat']:.3f}")
     sig = "yes" if r["holm_p"] < 0.05 else "no"
-    unit = "$" if r["outcome"] == "spend" else "pp"
+    if r["outcome"] == "spend":
+        est = f"+${r['estimate']:.6f} (USD per randomized customer)"
+        ci = (f"[+${r['ci_lo']:.6f}, +${r['ci_hi']:.6f}] "
+              f"(USD per randomized customer)")
+    else:
+        est = (f"{r['estimate']:+.6f} (probability difference) = "
+               f"{100 * r['estimate']:+.4f} percentage points")
+        ci = (f"[{r['ci_lo']:+.6f}, {r['ci_hi']:+.6f}] (probability difference) = "
+              f"[{100 * r['ci_lo']:+.4f}, {100 * r['ci_hi']:+.4f}] percentage points")
     lines.append(
-        f"| {r['pair']} | {r['outcome']} | {r['estimate']:+.6f} {unit} | "
-        f"[{r['ci_lo']:+.6f}, {r['ci_hi']:+.6f}] | {stat} | {r['raw_p']:.3g} | "
+        f"| {r['pair']} | {r['outcome']} | {est} | "
+        f"{ci} | {stat} | {r['raw_p']:.3g} | "
         f"{r['holm_p']:.3g} | {sig} | {100 * r['relative_uplift']:+.1f}% |")
 lines += [
     "",

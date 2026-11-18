@@ -245,3 +245,84 @@ first recorded, not verified against an external pre-existing hash.
 - **Logged via:** results/logs/main-analysis-2026-11-12__08_reconcile_and_report
   .20261112T101608Z.txt and timestamped failure copy (exit code 1 in
   results/logs/exit_codes.csv).
+
+### M6. Probability-scale effects mislabeled as "pp" (reporting error; found by
+    external computational audit, corrected 2026-11-18)
+
+- **Original erroneous statement (verbatim):** in
+  `results/analysis/primary_results.md` (pre-correction, commit 86eb4fe, tag
+  `pre-unit-label-fix`), line 9:
+  `| Mens E-Mail minus No E-Mail | visit | +0.076590 pp | [+0.069954,
+  +0.083226] | z=22.621 | 2.71e-113 | 1.62e-112 | yes | +72.1% |`
+  and the corresponding rows for Mens conversion (+0.006805), Womens visit
+  (+0.045233) and Womens conversion (+0.003111) on lines 10, 12, 13. The
+  same four labels appeared in `reconciliation_report.md` (lines 26-30).
+  Cause in code: `unit = "$" if outcome == "spend" else "pp"` in
+  `src/05_analysis_primary.py` (line 176) and
+  `src/08_reconcile_and_report.py` (line 210) attached the percentage-point
+  token to the raw probability difference.
+- **Independent evidence identifying the error:** external computational
+  audit `results/analysis/human_verification/independent_primary_audit.md`
+  (12 Nov 2026): "Risk differences 0.076590, 0.045233, 0.006805, 0.003111
+  correspond to 7.6590, 4.5233, 0.6805, 0.3111 percentage points,
+  respectively; use `pp` only after multiplying probability differences by
+  100. Spend differences are USD per randomized observation, not percentage
+  points." The audit's numerical comparison
+  (`independent_primary_audit.csv`) reproduced all six estimates, SEs, CIs
+  and p-values (max absolute difference 3.33e-16), isolating the defect to
+  the unit label: numerical accuracy was intact, reporting accuracy was not.
+- **Root cause:** display formatting treated the probability difference as if
+  it were already a percentage-point difference. One percentage point equals
+  0.01 in probability, so the correct conversion is `pp = 100 x d`; the label
+  understated visit/conversion effects by exactly a factor of 100.
+- **Correction:** dual reporting in both artifacts — e.g.
+  `+0.076590 (probability difference) = +7.6590 percentage points`, with
+  confidence intervals converted by the same factor, and spend rows labeled
+  `(USD per randomized customer)`. Unit legends distinguish probability
+  differences, percentage points, relative percentage uplift and dollar
+  differences. No estimate, SE, test statistic, CI, or p-value was changed;
+  all ten statistical CSVs are byte-identical to the pre-correction snapshot
+  (diff of `results/analysis/*.csv` vs. tag `pre-unit-label-fix`).
+- **Why the previous verification tests missed it:** VT-7 checks causal
+  language only (forbidden phrases), and VT-8 checked that the displayed
+  number matched the CSV but not that the *unit token* was consistent with
+  the number's scale. No test bound units to magnitudes, so a correct number
+  with a wrong unit passed every check. VT-3/04/05 are numeric-only and were
+  unaffected by a labeling defect.
+- **Results of the new verification test:** VT-9 added to
+  `src/08_reconcile_and_report.py` and executed
+  (`main-analysis-2026-11-18`, run `.20261118T132526Z`): **PASS** — 6 table
+  rows + 6 report lines verified, point estimates and CIs, tolerance
+  5e-7 (probability), 5e-4 (percentage points); negative control (the
+  original `+0.076590 pp` label) is **detected and rejected**; post-write
+  file recheck passed 6/6. All VT-1..VT-8 + INT remain PASS (10/10 total).
+- **Evidence preservation:** pre-correction scripts, results, logs and this
+  file are preserved in commit 86eb4fe, annotated tag `pre-unit-label-fix`;
+  the correction is a separate commit, so `git diff` shows the erroneous
+  labels verbatim.
+- **Logged via:** results/logs/main-analysis-2026-11-18__05_analysis_primary
+  .20261118T132519Z.txt and
+  results/logs/main-analysis-2026-11-18__08_reconcile_and_report
+  .20261118T132526Z.txt (exit code 0 each, in results/logs/exit_codes.csv).
+
+### M7. Rerun of 05 dropped the 06 section of model_log.md (artifact/provenance defect)
+
+- **Original behavior:** `src/05_analysis_primary.py` writes
+  `results/analysis/model_log.md` with `Path.write_text` (full overwrite),
+  while `src/06_balance_and_robustness.py` appends its section. Rerunning 05
+  after 06 therefore deleted the model-call record for the R2 statsmodels
+  OLS (AGENTS.md rule 5 provenance).
+- **Cause:** asymmetric write modes (overwrite vs append) combined with
+  out-of-order reruns during the M6 correction (05 was rerun while 06's
+  section was already on disk).
+- **Impact:** no statistical output affected; all ten statistical CSVs
+  remained byte-identical. The loss was confined to the model-call log.
+- **Correction:** rerun 06 (append restores its section), then rerun 08 so
+  the INT check reflects the enlarged sha256 log. No code change; ordering
+  documented here as the operational rule: after a 05-only rerun, rerun 06
+  before publishing artifacts.
+- **Retest:** 06 and 08 rerun sequentially; model_log.md again contains both
+  sections; VT-1..VT-9 + INT all PASS; CSVs byte-identical to tag
+  `pre-unit-label-fix`.
+- **Logged via:** the 2026-11-18 run logs for 06 and 08 in results/logs/ and
+  results/logs/exit_codes.csv.

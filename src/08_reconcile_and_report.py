@@ -175,21 +175,176 @@ overall &= add_vt("VT-7", "language audit of write-up artifacts",
                   ok7, "0 forbidden phrases in " + ", ".join(f.name for f in md_files)
                        if ok7 else "; ".join(hits))
 
+# ---------------- unit parsing helpers shared by VT-8 / VT-9 -------------------
+EST_PROB = re.compile(r"^([+\-]\d+\.\d+) \(probability difference\) = "
+                      r"([+\-]\d+\.\d+) percentage points$")
+EST_USD = re.compile(r"^([+\-]\$\d+\.\d+) \(USD per randomized customer\)$")
+CI_PROB = re.compile(r"^\[([+\-]\d+\.\d+), ([+\-]\d+\.\d+)\] \(probability difference\) = "
+                     r"\[([+\-]\d+\.\d+), ([+\-]\d+\.\d+)\] percentage points$")
+CI_USD = re.compile(r"^\[([+\-]\$\d+\.\d+), ([+\-]\$\d+\.\d+)\] "
+                    r"\(USD per randomized customer\)$")
+SIG_RE = re.compile(r"^- (.+?), (visit|conversion|spend): (.+?); 95% CI (.+?); ")
+
+
+def parse_est_ci(est_cell: str, ci_cell: str, outcome: str):
+    """Parse an estimate/CI cell pair; returns None if number OR unit is wrong."""
+    est_cell, ci_cell = est_cell.strip(), ci_cell.strip()
+    if outcome == "spend":
+        m_est, m_ci = EST_USD.match(est_cell), CI_USD.match(ci_cell)
+        if not (m_est and m_ci):
+            return None
+        return {"est": float(m_est.group(1).lstrip("+$")), "est_pp": None,
+                "ci_lo": float(m_ci.group(1).lstrip("+$")),
+                "ci_hi": float(m_ci.group(2).lstrip("+$")),
+                "ci_pp_lo": None, "ci_pp_hi": None}
+    m_est, m_ci = EST_PROB.match(est_cell), CI_PROB.match(ci_cell)
+    if not (m_est and m_ci):
+        return None
+    return {"est": float(m_est.group(1)), "est_pp": float(m_est.group(2)),
+            "ci_lo": float(m_ci.group(1)), "ci_hi": float(m_ci.group(2)),
+            "ci_pp_lo": float(m_ci.group(3)), "ci_pp_hi": float(m_ci.group(4))}
+
+
+def parse_table_rows(lines):
+    rows = {}
+    for line in lines:
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        cells = [c.strip() for c in s.split("|")]
+        if len(cells) < 6:
+            continue
+        pair, outcome = cells[1], cells[2]
+        if outcome not in ("visit", "conversion", "spend"):
+            continue
+        vals = parse_est_ci(cells[3], cells[4], outcome)
+        if vals is not None:
+            rows[(pair, outcome)] = vals
+    return rows
+
+
+def parse_sig_lines(lines):
+    rows = {}
+    for line in lines:
+        m = SIG_RE.match(line.strip())
+        if not m:
+            continue
+        vals = parse_est_ci(m.group(3), m.group(4), m.group(2))
+        if vals is not None:
+            rows[(m.group(1), m.group(2))] = vals
+    return rows
+
+
+def fmt_est_ci(r):
+    """Dual reporting: probability difference + percentage points / USD."""
+    if r["outcome"] == "spend":
+        est = f"+${float(r['estimate']):.6f} (USD per randomized customer)"
+        ci = (f"[+${float(r['ci_lo']):.6f}, +${float(r['ci_hi']):.6f}] "
+              f"(USD per randomized customer)")
+    else:
+        est = (f"{float(r['estimate']):+.6f} (probability difference) = "
+               f"{100 * float(r['estimate']):+.4f} percentage points")
+        ci = (f"[{float(r['ci_lo']):+.6f}, {float(r['ci_hi']):+.6f}] "
+              f"(probability difference) = "
+              f"[{100 * float(r['ci_lo']):+.4f}, "
+              f"{100 * float(r['ci_hi']):+.4f}] percentage points")
+    return est, ci
+
+
+def unit_failures(vals, row):
+    """Return the list of scale/unit checks that fail for one parsed row."""
+    TOL_PROB, TOL_PP, TOL_UNIT = 5e-7, 5e-4, 5e-4
+    fails = []
+    e, lo, hi = float(row["estimate"]), float(row["ci_lo"]), float(row["ci_hi"])
+    if abs(vals["est"] - e) > TOL_PROB:
+        fails.append("est")
+    if abs(vals["ci_lo"] - lo) > TOL_PROB:
+        fails.append("ci_lo")
+    if abs(vals["ci_hi"] - hi) > TOL_PROB:
+        fails.append("ci_hi")
+    if row["outcome"] == "spend":
+        if vals["est_pp"] is not None:
+            fails.append("pp_on_usd")
+        return fails
+    if vals["est_pp"] is None:
+        fails.append("missing_pp")
+        return fails
+    if abs(vals["est_pp"] - 100 * e) > TOL_PP:
+        fails.append("est_pp")
+    if abs(vals["est_pp"] - 100 * vals["est"]) > TOL_UNIT:
+        fails.append("est_pp_vs_displayed_prob")
+    if abs(vals["ci_pp_lo"] - 100 * lo) > TOL_PP:
+        fails.append("ci_pp_lo")
+    if abs(vals["ci_pp_hi"] - 100 * hi) > TOL_PP:
+        fails.append("ci_pp_hi")
+    if abs(vals["ci_pp_lo"] - 100 * vals["ci_lo"]) > TOL_UNIT:
+        fails.append("ci_pp_lo_vs_displayed_prob")
+    if abs(vals["ci_pp_hi"] - 100 * vals["ci_hi"]) > TOL_UNIT:
+        fails.append("ci_pp_hi_vs_displayed_prob")
+    return fails
+
+
+# ---------------- report lines (built early so VT-9 can check them) ------------
+sig_lines, sig_vals = [], {}
+for r in primary:
+    est, ci = fmt_est_ci(r)
+    stat = (f"t={float(r['test_stat']):.2f} (df={float(r['df']):.1f})"
+            if r["outcome"] == "spend" else f"z={float(r['test_stat']):.2f}")
+    sig = ("significant (Holm 0.05)" if float(r["holm_p"]) < 0.05
+           else "not significant (Holm 0.05)")
+    sig_lines.append(
+        f"- {r['pair']}, {r['outcome']}: {est}; 95% CI {ci}; {stat}; "
+        f"raw p = {float(r['raw_p']):.3g}; Holm p = {float(r['holm_p']):.3g} — {sig}.")
+    sig_vals[(r["pair"], r["outcome"])] = parse_est_ci(est, ci, r["outcome"])
+
 # ---------------- VT-8: artifact-vs-write-up reconciliation ---------------------
-ok8 = True
 pr_lines = (OUT / "primary_results.md").read_text(encoding="utf-8").splitlines()
-md_cells = {}
-for line in pr_lines:
-    mrow = re.match(r"\| ([^|]+) \| (\S+) \| ([+\-\d.]+) (?:pp|\$) \|", line.strip())
-    if mrow:
-        md_cells[(mrow.group(1).strip(), mrow.group(2))] = float(mrow.group(3))
-for (pair, outcome), val in md_cells.items():
-    row = pm.get((pair, outcome))
-    ok8 &= row is not None and abs(float(row["estimate"]) - val) <= 5e-7
-ok8 &= len(md_cells) == 6
+ok8 = True
+md_rows = parse_table_rows(pr_lines)
+ok8 &= len(md_rows) == 6
+for key, val in md_rows.items():
+    row = pm.get(key)
+    ok8 &= row is not None and abs(float(row["estimate"]) - val["est"]) <= 5e-7
 overall &= add_vt("VT-8", "write-up numbers reconcile with primary_results.csv",
-                  ok8, f"{len(md_cells)} md estimates matched to CSV within "
+                  ok8, f"{len(md_rows)} md estimates matched to CSV within "
                        f"rounding (5e-7)")
+
+# ---------------- VT-9: unit/scale consistency (incl. negative control) --------
+fail9 = []
+for key, val in md_rows.items():
+    row = pm.get(key)
+    if row is None:
+        fail9.append(f"{key}: no CSV row")
+        continue
+    fail9 += [f"{key[0]}/{key[1]}: {f}" for f in unit_failures(val, row)]
+for key, val in sig_vals.items():
+    if val is None:
+        fail9.append(f"report {key}: unparseable unit cell")
+        continue
+    fail9 += [f"report {key[0]}/{key[1]}: {f}"
+              for f in unit_failures(val, pm[key])]
+if len(sig_vals) != 6:
+    fail9.append(f"report lines parsed = {len(sig_vals)} (expected 6)")
+
+# negative control: the original erroneous labels MUST be rejected
+old_table = ("| Mens E-Mail minus No E-Mail | visit | +0.076590 pp | "
+             "[+0.069954, +0.083226] | z=22.621 | 2.71e-113 | 1.62e-112 | "
+             "yes | +72.1% |")
+old_report = ("- Mens E-Mail minus No E-Mail, visit: +0.076590 pp "
+              "[+0.069954, +0.083226]; z=22.62; raw p = 2.71e-113; "
+              "Holm p = 1.62e-112 — significant (Holm 0.05).")
+neg_detected = (len(parse_table_rows([old_table])) == 0
+                and len(parse_sig_lines([old_report])) == 0)
+if not neg_detected:
+    fail9.append("negative control NOT detected (old 'pp' label accepted)")
+
+ok9 = len(fail9) == 0
+overall &= add_vt(
+    "VT-9", "unit/scale consistency: pp = 100 x probability difference",
+    ok9,
+    "6 table rows + 6 report lines verified (point estimates and CIs); "
+    "negative control (original '+0.076590 pp' label) detected"
+    if ok9 else "; ".join(fail9[:6]))
 
 # ---------------- integrity: sha logs ------------------------------------------
 sha_rows = list(csv.DictReader(open(OUT / "sha256_log.csv", newline="", encoding="utf-8")))
@@ -199,30 +354,14 @@ overall &= add_vt("INT", "data/raw sha256 constant across all analysis runs",
                   ok_sha, f"{len(sha_rows)} log rows, digest {h_now[:16]}...")
 
 # ---------------- final artifacts ----------------------------------------------
-with open(OUT / "vt_results.csv", "w", newline="", encoding="utf-8") as fh:
-    w = csv.writer(fh)
-    w.writerow(["vt_id", "description", "verdict", "detail"])
-    w.writerows(vt_rows)
-
 n_pass = sum(1 for r in vt_rows if r[2] == "PASS")
-sig_lines = []
-for r in primary:
-    unit = "$" if r["outcome"] == "spend" else "pp"
-    stat = (f"t={float(r['test_stat']):.2f} (df={float(r['df']):.1f})"
-            if r["outcome"] == "spend" else f"z={float(r['test_stat']):.2f}")
-    sig = "significant (Holm 0.05)" if float(r["holm_p"]) < 0.05 else "not significant (Holm 0.05)"
-    sig_lines.append(
-        f"- {r['pair']}, {r['outcome']}: {float(r['estimate']):+.6f} {unit} "
-        f"[{float(r['ci_lo']):+.6f}, {float(r['ci_hi']):+.6f}]; {stat}; "
-        f"raw p = {float(r['raw_p']):.3g}; Holm p = {float(r['holm_p']):.3g} — {sig}.")
-
 report = [
     "# Reconciliation and final analysis report (plan.md §10–§12)",
     "",
     f"Run date: {datetime.now(timezone.utc).isoformat()}",
     f"data/raw SHA-256 (all runs identical): {h_now}",
     "",
-    "## VT-1..VT-8 + integrity results",
+    "## VT-1..VT-9 + integrity results",
     "",
     "| ID | Check | Verdict | Detail |",
     "|---|---|---|---|",
@@ -230,6 +369,16 @@ report = [
 for vt_id, desc, verdict, detail in vt_rows:
     report.append(f"| {vt_id} | {desc} | {verdict} | {detail} |")
 report += [
+    "",
+    "## Units used in this report",
+    "",
+    "- Visit and conversion: absolute effects are **probability differences** on",
+    "  the 0–1 scale; multiplied by 100 they are **percentage points** (pp).",
+    "  Confidence intervals are converted with the same factor.",
+    "- **Relative uplift** is a relative percentage change (arm mean / control",
+    "  mean − 1); it is not a percentage-point difference.",
+    "- Spend: **dollar differences in mean spending per randomized customer**",
+    "  (USD); spend effects are not percentage points.",
     "",
     "## Six primary ITT contrasts (full detail: primary_results.csv)",
     "",
@@ -242,19 +391,23 @@ report += [
     "## Statistical vs. business significance",
     "",
     "- Statistical significance: Holm-adjusted p < 0.05 only (see table above).",
-    "- Business significance: magnitudes — absolute percentage points (visit,",
-    "  conversion) and dollars per contacted customer (spend), with relative",
-    "  uplift as context. The dataset contains no cost/margin information, so",
-    "  no profitability verdict is possible (limitation A4). Magnitudes are",
-    "  reported for decision-makers; they do not replace a cost-benefit model.",
+    "- Business significance: magnitudes — probability differences (also given",
+    "  in percentage points) for visit and conversion, and dollars per",
+    "  randomized customer for spend, with relative uplift as context. The",
+    "  dataset contains no cost/margin information, so no profitability verdict",
+    "  is possible (limitation A4). Magnitudes are reported for decision-makers;",
+    "  they do not replace a cost-benefit model.",
     "",
     "## Verification status and independence statement",
     "",
     "All checks above are agent-authored cross-checks. Agreement between the two",
     "agent-written calculation paths rules out coding slips but is NOT independent",
-    "human validation. The blinded Stage-1 review (VERIFICATION_PROTOCOL.md) and",
-    "human reasoning review (plan.md §10, §11 criterion 6) are PENDING; no",
-    "'independently verified' label is claimed.",
+    "human validation. An external computational audit",
+    "(human_verification/independent_primary_audit.md) confirmed the six",
+    "estimates and identified the M6 unit-labeling error; the blinded Stage-1",
+    "review (VERIFICATION_PROTOCOL.md) and human reasoning review (plan.md §10,",
+    "§11 criterion 6) remain PENDING; no 'independently verified' label is",
+    "claimed.",
     "",
     "## Robustness summary (full detail: 06 artifacts + robustness.md)",
     "",
@@ -281,7 +434,21 @@ report += [
 # VT-7 self-audit of this report must also pass; verify before writing
 for ph in FORBIDDEN:
     assert ph not in " ".join(report).lower(), f"forbidden phrase in report: {ph}"
-(OUT / "reconciliation_report.md").write_text("\n".join(report) + "\n", encoding="utf-8")
+report_text = "\n".join(report) + "\n"
+(OUT / "reconciliation_report.md").write_text(report_text, encoding="utf-8")
+
+# post-write file recheck: every generated report line must be present verbatim
+missing = [ln for ln in sig_lines if ln not in report_text]
+if missing:
+    overall = False
+    print(f"[VT-9] POST-WRITE RECHECK FAILED: {len(missing)} report lines missing")
+else:
+    print("[VT-9] post-write file recheck passed (6/6 report lines present verbatim)")
+
+with open(OUT / "vt_results.csv", "w", newline="", encoding="utf-8") as fh:
+    w = csv.writer(fh)
+    w.writerow(["vt_id", "description", "verdict", "detail"])
+    w.writerows(vt_rows)
 
 print(f"[summary] VT checks: {n_pass}/{len(vt_rows)} PASS")
 if not overall:

@@ -14,12 +14,3 @@
   contrasts (plan.md §8 R2). No randomness.
 - R3: closed-form Welch on log1p(spend); exact two-part decomposition.
 - R5: numpy default_rng(42), 10,000 arm-stratified resamples per pair.
-
-## src/06_balance_and_robustness.py
-- R2: statsmodels OLS (HC1), n=64,000, design = intercept + treat_mens
-  + treat_womens + recency + history + mens + womens + newbie +
-  zip dummies (drop_first) + channel dummies (drop_first); outcomes:
-  visit, conversion, spend. Labeled approximate re-expression of ITT
-  contrasts (plan.md §8 R2). No randomness.
-- R3: closed-form Welch on log1p(spend); exact two-part decomposition.
-- R5: numpy default_rng(42), 10,000 arm-stratified resamples per pair.
