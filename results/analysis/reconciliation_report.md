@@ -1,6 +1,6 @@
 # Reconciliation and final analysis report (plan.md §10–§12)
 
-Run date: 2026-11-18T13:36:39.516503+00:00
+Run date: 2026-11-18T14:31:27.188309+00:00
 data/raw SHA-256 (all runs identical): 00a6a868e05a9ffe7382da51629f6d6dce88c5acfc945e79d314ebc78fd3a2c0
 
 ## VT-1..VT-10 + integrity results
@@ -78,7 +78,9 @@ claimed.
   the weighting convention. term2 conditions on post-treatment conversion
   and is descriptive only; the split does not identify causal mechanisms.
 - R4: BH-FDR conclusions agree with Holm FWER (robustness_bh.csv).
-- R5: bootstrap percentile CIs bracket the Welch CIs (robustness_bootstrap.csv).
+- R5: Bootstrap percentile confidence intervals are highly similar to and
+  substantially overlap the corresponding Welch intervals
+  (robustness_bootstrap.csv).
 - R1: deduplication remains an illustration of a potentially invalid
   data-processing decision (see robustness.md), not an alternative estimate.
 - R6: funnel-stage numbers are DESCRIPTIVE ONLY (post-treatment conditioning).

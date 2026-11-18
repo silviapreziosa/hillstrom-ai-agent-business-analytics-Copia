@@ -538,3 +538,34 @@ counts are therefore **22 confirmed error items + 2 methodological ambiguities
 = 24 documented items**; category totals 2 + 8 + 6 + 2 + 4 = 22. The 21/23
 figures in earlier sections of this file are retained unaltered as the
 pre-M10 record.
+
+---
+
+### M10 follow-up — source-level correction and regeneration (2026-11-18)
+
+- **Source correction:** `src/08_reconcile_and_report.py` now emits
+  `- R5: Bootstrap percentile confidence intervals are highly similar to and
+  substantially overlap the corresponding Welch intervals
+  (robustness_bootstrap.csv).` The previous line ("bootstrap percentile CIs
+  bracket the Welch CIs") is removed.
+- **Verification performed:** regenerated
+  `results/analysis/reconciliation_report.md` with
+  `src/run.sh 08_reconcile_and_report.py m10-source-fix-2026-11-18`
+  (exit 0; log
+  `results/logs/m10-source-fix-2026-11-18__08_reconcile_and_report.20261118T143125Z.txt`).
+  VT-1…VT-10 + INT: **11/11 PASS**; VT-9 post-write recheck 6/6. A text search
+  finds no "bracket" occurrence in `src/08_reconcile_and_report.py` or the
+  regenerated report.
+- **Numerical invariance:** the 16 tracked result/audit CSVs under
+  `results/analysis/` and `results/verification/` (excluding the
+  `pipeline_log.csv`, `sha256_log.csv` and `vt_results.csv` metadata files)
+  are byte-identical to HEAD (`git diff --exit-code` clean);
+  `vt_results.csv`, `pipeline_log.csv` and `sha256_log.csv` are also
+  unchanged. The only changes are the R5 sentence and run date in
+  `reconciliation_report.md`, the appended `exit_codes.csv` row, the new run
+  log, and the source line.
+- **Outcome:** M10 is corrected at source, and the generated artifact no longer
+  contains the containment claim. Per instruction, `README.md` and
+  `docs/error_taxonomy.md` were not modified; their M10 notes still describe
+  the source fix as pending or outside scope and are superseded by this
+  follow-up.
