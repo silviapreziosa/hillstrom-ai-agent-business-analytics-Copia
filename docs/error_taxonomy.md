@@ -7,10 +7,10 @@ result and does not re-classify any item silently.
 
 **Counting unit.** One item = one numbered entry in `mistakes.md` (1–11), one
 lettered item in the transparency log (a–c), or one `M`-numbered entry
-(M1–M9). Each item is assigned to **exactly one** primary category. Where an
+(M1–M10). Each item is assigned to **exactly one** primary category. Where an
 item also illustrates a second theme, that theme is noted, not counted again.
 
-**Date of this classification:** 2026-11-18.
+**Date of this classification:** 2026-11-18 (revised the same day to add M10).
 
 ---
 
@@ -22,21 +22,21 @@ item also illustrates a second theme, that theme is noted, not counted again.
 | Verification-design errors | 8 | 3, 7, 8, 9, 10, 11, M5, M9 |
 | Coding and execution failures | 6 | transparency a, b, c; M1, M2, M4 |
 | Tooling and reproducibility failures | 2 | M3, M7 |
-| Reporting and interpretation errors | 3 | 5, M6, M8 |
-| **Confirmed error items** | **21** | |
+| Reporting and interpretation errors | 4 | 5, M6, M8, M10 |
+| **Confirmed error items** | **22** | |
 | Methodological ambiguities | 2 | 2, 6 |
-| **Documented items (errors + ambiguities)** | **23** | |
+| **Documented items (errors + ambiguities)** | **24** | |
 
 **Check against the records.** `mistakes.md` contains 11 numbered entries,
-3 lettered transparency items, and 9 `M` entries: 11 + 3 + 9 = 23. Of these,
-entries 2 and 6 are methodological ambiguities, leaving 21 confirmed error
-items. Category totals: 2 + 8 + 6 + 2 + 3 = 21. The two counts agree.
+3 lettered transparency items, and 10 `M` entries: 11 + 3 + 10 = 24. Of these,
+entries 2 and 6 are methodological ambiguities, leaving 22 confirmed error
+items. Category totals: 2 + 8 + 6 + 2 + 4 = 22. The two counts agree.
 
 **Not counted as error items.** The documentation gap in `README.md` (stale
 statement that `plan.md` was empty) and the irrecoverable 2026-11-05 failure
 logs (§R1) are recorded separately in §8 below. They are repository and
 evidence-management issues, not analysis errors, and are not added to the
-21.
+22.
 
 ---
 
@@ -333,7 +333,7 @@ evidence-management issues, not analysis errors, and are not added to the
 
 ---
 
-## 5. Reporting and interpretation errors (3)
+## 5. Reporting and interpretation errors (4)
 
 ### E5 — "birthday-paradox logic guarantees collisions"
 
@@ -408,6 +408,36 @@ evidence-management issues, not analysis errors, and are not added to the
   (tag `pre-r3-interpretation-fix`); correction commit `30f1c5f`; both audit
   files; VT-10 in `results/analysis/vt_results.csv`.
 
+### M10 — README said the bootstrap intervals "bracket" the Welch intervals
+
+- **Original (verbatim):** "R5 bootstrap | Mens [+0.486360, +1.058330];
+  Womens [+0.171673, +0.681706]; percentile CIs bracket the Welch CIs"
+  (`README.md` §E.3, commit `e3ca0ea`). The same sentence is emitted by
+  `src/08_reconcile_and_report.py` into `reconciliation_report.md`.
+- **Why it is wrong:** "bracket" asserts containment. The Welch spend
+  intervals are Mens [+0.485140, +1.054515] and Womens
+  [+0.168957, +0.679868]. Both percentile endpoints are higher than the
+  corresponding Welch endpoints (Mens +0.001220 / +0.003815; Womens
+  +0.002716 / +0.001838 USD), so neither interval contains the other. The
+  widths are nearly identical (Mens 0.571970 vs 0.569375; Womens 0.510032 vs
+  0.510911 USD): the intervals are highly similar and substantially
+  overlapping, not nested.
+- **Detection:** human-directed final README accuracy review, 2026-11-18;
+  the endpoint comparison was performed by the agent against
+  `robustness_bootstrap.csv` and `primary_results.csv`. This is not a
+  completed human audit.
+- **Correction:** `README.md` §E.3 reworded; the small upward endpoint shift
+  and the absence of containment are stated, and the still-stale generated
+  `reconciliation_report.md` is flagged. No estimate, SE, CI or p-value
+  changed.
+- **Re-test:** direct endpoint arithmetic, re-checked against both CSVs. No
+  automated VT tests interval containment, so no PASS is claimed. Correcting
+  the generated report would require a `src/08` change and rerun, which was
+  outside this documentation-only correction.
+- **Evidence:** `mistakes.md` §M10; `robustness_bootstrap.csv`;
+  `primary_results.csv`; commit `e3ca0ea` (original wording); 2026-11-18
+  documentation correction commit.
+
 ---
 
 ## 6. Methodological ambiguities (2)
@@ -469,7 +499,7 @@ Reference: `plan.md` §1, §7–§9; `results/analysis/reconciliation_report.md`
   (2026-11-12) and the main analysis was executed afterwards.
 - **Status:** corrected in the documentation commit that adds this file; the
   statement is replaced by the actual plan state. This gap was not previously
-  recorded in `mistakes.md` and is not counted among the 21 error items.
+  recorded in `mistakes.md` and is not counted among the 22 error items.
 
 ### R1 — irrecoverable 2026-11-05 failure logs
 
@@ -480,7 +510,7 @@ Reference: `plan.md` §1, §7–§9; `results/analysis/reconciliation_report.md`
 - **Status:** acknowledged, not reconstructed. No historical evidence was
   fabricated. Future runs use `src/run.sh`, which preserves failures and logs
   exit codes. This is an evidence-preservation limitation, not an analysis
-  error, and is not counted among the 21.
+  error, and is not counted among the 22.
 - **Evidence:** `mistakes.md` §R1; commit `9b02f0e`; `src/run.sh`.
 
 ---
@@ -504,4 +534,5 @@ Reference: `plan.md` §1, §7–§9; `results/analysis/reconciliation_report.md`
 | M7 | Tooling | `model_log.md` | `2f87409`, `30f1c5f` |
 | M8 | Reporting | audit 2; VT-10 | `f71ea24` / `pre-r3-interpretation-fix`; `30f1c5f` |
 | M9 | Verification design | VT-10 failure log | `30f1c5f` |
+| M10 | Reporting | `robustness_bootstrap.csv`; `primary_results.csv` | `e3ca0ea` (original wording); 2026-11-18 documentation correction |
 | R1 | Evidence loss (not an error) | `mistakes.md` §R1 | `9b02f0e` |

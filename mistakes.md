@@ -472,3 +472,69 @@ authoritative, non-overlapping classification and the checked totals
 (21 confirmed error items + 2 methodological ambiguities = 23 documented
 items) are in `docs/error_taxonomy.md`. Items are counted once by primary
 category; cross-references are not double-counted.
+
+---
+
+## Final accuracy correction (2026-11-18) — README interval description (M10)
+
+This section is **append-only**: no earlier entry, quote, number, or verdict has
+been altered.
+
+### M10. README claimed the bootstrap percentile intervals "bracket" the Welch intervals
+
+- **Original (verbatim):** "R5 bootstrap | Mens [+0.486360, +1.058330];
+  Womens [+0.171673, +0.681706]; percentile CIs bracket the Welch CIs"
+  (`README.md` §E.3, commit `e3ca0ea`). The same sentence is emitted by
+  `src/08_reconcile_and_report.py` (line 541) into
+  `results/analysis/reconciliation_report.md`.
+- **Why it is wrong:** "bracket" asserts that the percentile interval encloses
+  the Welch interval. The Welch spend intervals are Mens
+  [+0.485140, +1.054515] and Womens [+0.168957, +0.679868]
+  (`primary_results.csv`). Both percentile endpoints are higher than the
+  corresponding Welch endpoints: Mens +0.001220 / +0.003815, Womens
+  +0.002716 / +0.001838 USD. Neither interval contains the other; the widths
+  are nearly identical (Mens 0.571970 vs 0.569375; Womens 0.510032 vs
+  0.510911 USD), so the intervals are highly similar and substantially
+  overlapping, not nested.
+- **Detection:** human-directed final README accuracy review,
+  2026-11-18; endpoint comparison performed by the agent against
+  `results/analysis/robustness_bootstrap.csv` and `primary_results.csv`.
+  The correction was specified in the review; the comparison is not a
+  completed human audit.
+- **Correction:** `README.md` §E.3 now reports the intervals as highly similar
+  and substantially overlapping, notes the small upward endpoint shift and the
+  absence of containment, and flags that the generated
+  `reconciliation_report.md` still carries the earlier wording. No estimate,
+  SE, CI, p-value or other numerical result changed.
+- **Verification:** direct endpoint arithmetic (values above), re-checked
+  against both CSVs. No automated VT covers this sentence; VT-7/VT-8/VT-10 do
+  not test interval containment, so no PASS is claimed. Correcting the
+  generated report would require changing `src/08` and rerunning it, which this
+  documentation-only correction does not do.
+
+### Related qualifications (not separate error items)
+
+- The README statements comparing campaigns were rewritten to distinguish
+  larger observed point estimates from a statistically established
+  between-campaign difference. The Men's estimates are larger in this sample
+  (ratios ≈1.69 visit, ≈1.81 spend, ≈2.19 conversion), but the six confirmatory
+  tests are each campaign versus No E-Mail; `plan.md` lists a Mens-vs-Womens
+  contrast only as exploratory, and no such estimate is reported. The revision
+  adds no test.
+- The reproducibility section now states that the exact file matching the
+  documented SHA-256 is required and that the repository does not guarantee
+  access to it.
+- Open item (not counted as an error): `plan.md` §4/§14 lists Mens-vs-Womens
+  and pre-treatment subgroup analyses in the exploratory set, but no such
+  estimates are reported in `results/`. The README rule-4 caveat records this
+  incompleteness. Whether the exploratory list was a requirement or a menu is
+  not documented, so it is flagged as an unresolved plan-compliance question,
+  not scored as a failure.
+
+### Count supersession
+
+This entry adds one reporting/interpretation error (M10). The authoritative
+counts are therefore **22 confirmed error items + 2 methodological ambiguities
+= 24 documented items**; category totals 2 + 8 + 6 + 2 + 4 = 22. The 21/23
+figures in earlier sections of this file are retained unaltered as the
+pre-M10 record.

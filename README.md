@@ -52,9 +52,9 @@ causal mechanism. Both were found by **separate AI computational audits**, not b
 the agent's own checks. No fully independent human audit has been completed;
 `VERIFICATION_PROTOCOL.md` Stages 1–3 remain pending.
 
-**Error posture.** 21 confirmed error items are documented across five
+**Error posture.** 22 confirmed error items are documented across five
 non-overlapping categories (2 statistical, 8 verification-design, 6
-coding/execution, 2 tooling/reproducibility, 3 reporting/interpretation), plus
+coding/execution, 2 tooling/reproducibility, 4 reporting/interpretation), plus
 2 methodological ambiguities. No correction changed a final reported estimate,
 standard error, confidence interval, or p-value; the two correction commits
 were verified byte-identical on all substantive CSVs. The errors are catalogued in `mistakes.md` and indexed in
@@ -149,7 +149,7 @@ against evidence, including violations.
 | 1. Never modify `data/raw/` | **Met** | SHA-256 logged before/after every run; constant across all runs |
 | 2. Print row counts after every filter/merge/drop | **Met** | `pipeline_log.csv` records loads and the dedup illustration; VT-1 checks 30 events |
 | 3. Every number traceable to `results/` + script | **Met** | Each report names its CSV and generating script; VT-8 reconciles quoted numbers |
-| 4. Follow `plan.md`; ask before changes; list choices | **Met with caveat** | Plan v1.1 followed; §14 choice register. VT-9/VT-10 were added later as verification tests, not method changes |
+| 4. Follow `plan.md`; ask before changes; list choices | **Met with caveat** | Plan v1.1's confirmatory family and specified robustness checks followed; §14 choice register. The exploratory set was not fully reported: no Mens-vs-Womens or subgroup estimates appear in `results/`. VT-9/VT-10 were added later as verification tests, not method changes |
 | 5. Fix seeds; log prompt, output, model name of every model call | **Partial** | Bootstrap seed 42; statistical models logged in `model_log.md`. **No AI model/prompt logging exists** |
 | 6. No causal claims unless the design supports them | **Violated once, corrected** | M8; corrected in `30f1c5f` |
 | 7. Explain method, assumptions, fit before analysis | **Met** | `plan.md` §5 pins formulas, estimands and assumptions |
@@ -331,9 +331,13 @@ contrasts pass. With n = 64,000, even small effects can be estimated precisely,
 so significance alone is not a business verdict.
 
 **Effect size** is reported in the outcome's natural unit: percentage points for
-visit and conversion, USD per randomized customer for spend. The Men's campaign
-is roughly 1.7–1.8× the Women's campaign on visit and spend, and about 2.2× on
-conversion.
+visit and conversion, USD per randomized customer for spend. In this sample the
+Men's point estimates are larger than the Women's — about 1.7× on visit, 1.8×
+on spend, and 2.2× on conversion. That is a comparison of estimated magnitudes,
+not a statistically established between-campaign difference: the six
+confirmatory tests are each campaign versus No E-Mail; `plan.md` lists a
+Mens-vs-Womens contrast only as exploratory, and no such estimate is reported
+in `results/`.
 
 **Business significance** cannot be fully assessed from this dataset. There is
 no campaign cost, margin, or customer-lifetime-value information (A4), so a
@@ -351,7 +355,7 @@ not identified here.**
 | R3a `log1p(spend)` | Mens +0.029241 log points (p = 1.08e-12); Womens +0.014209 (p = 0.000138) |
 | R3b decomposition | Mens term1 ≈ +100.6%, term2 ≈ −0.6%; Womens term1 ≈ +86.5%, term2 ≈ +13.5% (midpoint weights; ≈16.4% for Womens term2 under control-side weights) |
 | R4 BH-FDR | All six reject at q = 0.05; agrees with Holm |
-| R5 bootstrap | Mens [+0.486360, +1.058330]; Womens [+0.171673, +0.681706]; percentile CIs bracket the Welch CIs |
+| R5 bootstrap | Mens [+0.486360, +1.058330]; Womens [+0.171673, +0.681706]; percentile intervals are highly similar to the Welch intervals and substantially overlapping (endpoints ≈$0.001–$0.004 higher; neither interval contains the other) |
 | Balance | max \|SMD\| = 0.0047; no evidence against randomization |
 | R1 deduplication | Spend contrast +0.769827 → +0.851223; illustration only, not an estimate |
 | R6 funnel | Descriptive only; no causal interpretation |
@@ -363,11 +367,26 @@ the Womens conditional-spend contribution is not "essentially zero": it is
 The corrected R3 section states the formula, the units, the shares, the
 weighting dependence, and the descriptive status of `term2`.
 
+The R5 percentile intervals do not enclose the Welch intervals. In both arms
+their endpoints sit slightly higher while their widths are nearly identical, so
+they are best described as highly similar and substantially overlapping, not as
+bracketing. The generated `reconciliation_report.md` and its source line in
+`src/08_reconcile_and_report.py` still carry the earlier "bracket" wording;
+both are outside this documentation-only correction, and the sentence is
+superseded here (see `mistakes.md` §M10).
+
 ### E.4 What the results do and do not support
 
 **Supported (under A1–A3):** assignment to either campaign increases visit
 probability, conversion probability, and mean spending relative to no email,
-over the observed window. The Men's campaign has larger absolute effects.
+over the observed window.
+
+**Not a tested difference:** in this sample the Men's estimated absolute
+effects are larger than the Women's on all three outcomes (about 1.7× visit,
+1.8× spend, 2.2× conversion). The six confirmatory tests are each
+campaign versus No E-Mail; no Mens-vs-Womens estimate is reported in
+`results/` (`plan.md` lists that contrast only as exploratory), so this is not
+a statistically established between-campaign difference.
 
 **Not supported:** that the campaigns are profitable; that the effects come from
 email content, opens, or reads; that the effects persist beyond the window;
@@ -584,7 +603,7 @@ in `mistakes.md` and `docs/error_taxonomy.md`.
 ## H. Critical Reflection
 
 **What went wrong.** The agent produced a complete, numerically reproducible
-analysis, but the record contains 21 confirmed error items across five
+analysis, but the record contains 22 confirmed error items across five
 categories. Two consequential errors were not computational. The
 duplicate-row error (E1) was a statistical-reasoning error: "affects SEs only"
 was false, and the deduplicated spend contrast moved by ≈10.6%. The fixture
@@ -731,9 +750,13 @@ from its official distribution or invoke it by absolute path.
 ### J.2 Data acquisition and integrity
 
 The raw dataset is **not** distributed in this repository, and no download URL
-or license is asserted. Obtain the file from a source you are entitled to use.
-The schema is consistent with the Hillstrom "MineThatData" email dataset
-(64,000 customers, three arms, 12 columns), but provenance is unverified.
+or license is asserted. Reproducing the numerical results in `results/`
+requires the **exact** file whose SHA-256 matches the digest below. A file with
+the same schema, column names, or row count is not sufficient. The repository
+does not supply, link to, or guarantee access to that file; obtaining it from a
+source you are entitled to use is the reviewer's responsibility. The schema is
+consistent with the Hillstrom "MineThatData" email dataset (64,000 customers,
+three arms, 12 columns), but provenance is unverified.
 
 Place the file at:
 
@@ -873,5 +896,6 @@ unless you intend to reproduce the historical artifacts.
 
 No license is asserted for the raw dataset, and it is not redistributed here.
 If you reuse this repository's code or documentation, cite the repository and
-the commit or tag you used. The numerical results are only reproducible with a
-file matching the SHA-256 above.
+the commit or tag you used. The numerical results are only reproducible with
+the exact file matching the SHA-256 above; that file is not distributed here,
+and access to it is not guaranteed by this repository.
