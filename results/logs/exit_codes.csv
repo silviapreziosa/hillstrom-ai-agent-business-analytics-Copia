@@ -1,2 +1,10 @@
 script,run_id,timestamp_utc,exit_code
 01_verify_duplicates_primary.py,smoke-test-2026-11-12,20261112T095850Z,0
+05_analysis_primary.py,main-analysis-2026-11-12,20261112T101218Z,1
+05_analysis_primary.py,main-analysis-2026-11-12,20261112T101300Z,1
+05_analysis_primary.py,main-analysis-2026-11-12,20261112T101411Z,0
+06_balance_and_robustness.py,main-analysis-2026-11-12,20261112T101501Z,0
+06_balance_and_robustness.py,main-analysis-2026-11-12,20261112T101544Z,0
+07_analysis_independent.py,main-analysis-2026-11-12,20261112T101559Z,0
+08_reconcile_and_report.py,main-analysis-2026-11-12,20261112T101608Z,1
+08_reconcile_and_report.py,main-analysis-2026-11-12,20261112T101639Z,0

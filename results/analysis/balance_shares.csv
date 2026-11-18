@@ -1,0 +1,19 @@
+covariate,level,arm,share
+zip_code,Rural,Mens E-Mail,0.1522035011967898
+zip_code,Surburban,Mens E-Mail,0.44590979490308347
+zip_code,Urban,Mens E-Mail,0.4018867039001267
+zip_code,Rural,No E-Mail,0.14732939078193935
+zip_code,Surburban,No E-Mail,0.4517506805594668
+zip_code,Urban,No E-Mail,0.4009199286585938
+zip_code,Rural,Womens E-Mail,0.14873521297984757
+zip_code,Surburban,Womens E-Mail,0.45120867816898114
+zip_code,Urban,Womens E-Mail,0.40005610885117127
+channel,Multichannel,Mens E-Mail,0.1209461679260337
+channel,Phone,Mens E-Mail,0.43366029943211154
+channel,Web,Mens E-Mail,0.4453935326418548
+channel,Multichannel,No E-Mail,0.12231296348446447
+channel,Phone,No E-Mail,0.4377640101379893
+channel,Web,No E-Mail,0.4399230263775462
+channel,Multichannel,Womens E-Mail,0.12058727264225931
+channel,Phone,Womens E-Mail,0.4420442324776733
+channel,Web,Womens E-Mail,0.43736849488006735

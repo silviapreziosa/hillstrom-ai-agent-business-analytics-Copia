@@ -1,0 +1,11 @@
+PASS  VT-1: row-count integrity; no silent drops/filters — 12 pipeline events; source scan clean; all 64,000 rows retained
+PASS  VT-2: spend identity mean = P(conv) x mean|conv (per arm) — identity holds to 1e-9 for all three arms
+PASS  VT-3: second-path recomputation of six contrasts — max |05-07| deviation = 3.331e-16 (tolerance 1e-9)
+PASS  VT-4: Holm envelope recomputed from raw p-values — agreement to 1e-12 across 6 adjusted p-values
+PASS  VT-5: balance table recomputed fresh from data/raw — all 15 SMD values agree to 1e-9
+PASS  VT-6: funnel assertions incl. corrupted-fixture negative test — real-data violations = 0; corrupted fixture detected = 1
+PASS  VT-7: language audit of write-up artifacts — 0 forbidden phrases in model_log.md, primary_results.md, robustness.md
+FAIL  VT-8: write-up numbers reconcile with primary_results.csv — 0 md estimates matched to CSV within rounding (5e-7)
+PASS  INT: data/raw sha256 constant across all analysis runs — 9 log rows, digest 00a6a868e05a9ffe...
+[summary] VT checks: 8/9 PASS
+[summary] FAILURES PRESENT — evidence preserved; no silent fixes.

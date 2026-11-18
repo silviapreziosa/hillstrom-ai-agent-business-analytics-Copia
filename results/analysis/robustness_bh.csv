@@ -1,0 +1,7 @@
+pair,outcome,raw_p,bh_adjusted,bh_reject_0.05
+Mens E-Mail minus No E-Mail,visit,2.707655809356535e-113,1.6245934856139213e-112,yes
+Mens E-Mail minus No E-Mail,conversion,1.469291797925834e-13,2.938583595851668e-13,yes
+Mens E-Mail minus No E-Mail,spend,1.1638149682254823e-07,1.7457224523382233e-07,yes
+Womens E-Mail minus No E-Mail,visit,1.9229845896838313e-44,5.768953769051493e-44,yes
+Womens E-Mail minus No E-Mail,conversion,0.0001557515355117247,0.00018690184261406967,yes
+Womens E-Mail minus No E-Mail,spend,0.0011293971023632475,0.0011293971023632475,yes

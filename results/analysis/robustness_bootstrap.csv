@@ -1,0 +1,3 @@
+pair,outcome,bootstrap_mean,ci_lo_percentile,ci_hi_percentile,resamples,seed
+Mens E-Mail minus No E-Mail,spend,0.7703199581998571,0.4863596406084785,1.0583297906172207,10000,42
+Womens E-Mail minus No E-Mail,spend,0.42553895314570556,0.17167320324841429,0.6817056733771861,10000,42

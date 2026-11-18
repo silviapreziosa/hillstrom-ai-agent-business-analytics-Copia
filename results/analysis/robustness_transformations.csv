@@ -1,0 +1,9 @@
+pair,analysis,estimate,se,df,p_value
+Mens E-Mail minus No E-Mail,R3a log1p(spend) Welch diff,0.02924148647244113,0.004105341322156309,37756.09716113482,1.0765147064366913e-12
+Mens E-Mail minus No E-Mail,R3b two-part: term1 Δconv × avg converter spend,0.7741703205610241,nan,nan,nan
+Mens E-Mail minus No E-Mail,R3b two-part: term2 avg conv rate × Δ converter spend,-0.0043431646664875,nan,nan,nan
+Mens E-Mail minus No E-Mail,R3b two-part: total (identity check),0.7698271558945367,nan,nan,nan
+Womens E-Mail minus No E-Mail,R3a log1p(spend) Welch diff,0.014209143517219424,0.0037276175911868277,40717.675780719226,0.00013812988858489308
+Womens E-Mail minus No E-Mail,R3b two-part: term1 Δconv × avg converter spend,0.36694529300252043,nan,nan,nan
+Womens E-Mail minus No E-Mail,R3b two-part: term2 avg conv rate × Δ converter spend,0.057466922934076146,nan,nan,nan
+Womens E-Mail minus No E-Mail,R3b two-part: total (identity check),0.4244122159365966,nan,nan,nan

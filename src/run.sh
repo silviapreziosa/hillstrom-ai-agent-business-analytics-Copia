@@ -49,8 +49,8 @@ fi
 printf '%s,%s,%s,%d\n' "$SCRIPT" "$RUN_ID" "$TS" "$EC" >> "$EC_FILE"
 
 if [ "$EC" -ne 0 ]; then
-    cp "$LOG" "$LOGDIR/${RUN_ID}__${STEM}_first_run_fail.txt"
-    echo "[run.sh] NONZERO EXIT $EC — log preserved: $LOG (failure copy: ${RUN_ID}__${STEM}_first_run_fail.txt)"
+    cp "$LOG" "$LOGDIR/${RUN_ID}__${STEM}_first_run_fail.${TS}.txt"
+    echo "[run.sh] NONZERO EXIT $EC — log preserved: $LOG (failure copy: ${RUN_ID}__${STEM}_first_run_fail.${TS}.txt)"
 else
     echo "[run.sh] exit $EC — log: $LOG"
 fi

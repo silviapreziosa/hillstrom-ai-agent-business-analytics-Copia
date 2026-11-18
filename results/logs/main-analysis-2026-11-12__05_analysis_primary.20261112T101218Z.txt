@@ -1,0 +1,7 @@
+[rule 2] load: 64000 rows (data/raw untouched; no filters applied)
+[rule 2] split by segment (no rows dropped): 21307/21306/21387 (sum 64000 = 64000)
+Traceback (most recent call last):
+  File "/Users/silviapreziosa/my-analysis/src/05_analysis_primary.py", line 131, in <module>
+    p1 = S[t_arm][f"p_{col}"]
+         ~~~~~~~~^^^^^^^^^^^^
+KeyError: 'p_conversion'

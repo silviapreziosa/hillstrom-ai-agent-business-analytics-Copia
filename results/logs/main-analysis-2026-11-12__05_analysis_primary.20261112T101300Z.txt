@@ -1,0 +1,4 @@
+  File "/Users/silviapreziosa/my-analysis/src/05_analysis_primary.py", line 132
+    p0 = S[c_arm][f"p_{col}"]            d = p1 - p0
+                                         ^
+SyntaxError: invalid syntax

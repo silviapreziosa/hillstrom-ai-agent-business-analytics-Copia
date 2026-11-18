@@ -161,3 +161,87 @@ first recorded, not verified against an external pre-existing hash.
 - **Unresolved assumptions** (explicitly NOT verified; see "Open assumptions"
   section): Hillstrom provenance, one-row-one-customer, spend-cap
   interpretation, and randomization itself.
+
+---
+
+## Session log — main analysis execution (2026-11-12)
+
+### M1. KeyError in src/05 (implementation error; first main-analysis run failed)
+
+- **Original error (verbatim traceback):** `KeyError: 'p_conversion'` at
+  `p1 = S[t_arm][f"p_{col}"]` (line 131 of the first run).
+- **Cause:** per-arm statistics were stored under key `p_conv` while the
+  outcome loop looked them up as `f"p_{col}"` with `col = "conversion"`.
+- **Correction:** statistic key renamed to `p_conversion` so the lookup key
+  matches for both outcomes.
+- **Retest:** PASSED — third run of 05 exited 0 (log
+  `main-analysis-2026-11-12__05_analysis_primary.20261112T101411Z.txt`);
+  primary_results.csv values match the independently recomputed second path
+  (VT-3, max deviation 3.331e-16) and the pre-registered verification values.
+- **Logged via:** `results/logs/main-analysis-2026-11-12__05_analysis_primary
+  .20261112T101218Z.txt` and failure copy `*_first_run_fail.txt` (first
+  execution; exit code 1 in `results/logs/exit_codes.csv`).
+
+### M2. Edit-induced syntax error in src/05 (implementation error; second run failed)
+
+- **Original error (verbatim traceback):** `SyntaxError: invalid syntax` at
+  `p0 = S[c_arm][f"p_{col}"]            d = p1 - p0` (line 132 of run
+  `.20261112T101300Z`).
+- **Cause:** a manual edit intended as a no-op collapsed the newline between
+  the two statements, merging them into one line.
+- **Correction:** newline restored.
+- **Retest:** PASSED — same third run of 05 as in M1 (exit 0, log
+  `…20261112T101411Z.txt`); script executed cleanly with restored newline.
+
+### M3. run.sh failure-copy overwrite (tooling defect found during M1/M2 handling)
+
+- **Original behavior:** the wrapper's failure copy used a name without a
+  timestamp (`<run-id>__<script>_first_run_fail.txt`), so a second failed run
+  with the same run-id overwrote the first failure copy.
+- **Impact:** the M1 failure copy was overwritten by the M2 failure copy.
+  **No evidence was lost:** the complete M1 failure log survives in the
+  timestamped log `main-analysis-2026-11-12__05_analysis_primary
+  .20261112T101218Z.txt` (timestamped logs themselves are never overwritten).
+- **Correction:** failure copies now carry the UTC timestamp
+  (`*_first_run_fail.<TS>.txt`), making them unique per run.
+- **Retest:** PASSED — the first 08 run failure (M5) produced a timestamped
+  failure copy `main-analysis-2026-11-12__08_reconcile_and_report_first_run_fail
+  .20261112T101608Z.txt`; no overwriting occurred.
+
+### M4. Dead-code term in src/06 R3 (cosmetic; zero effect on results)
+
+- **Original code (verbatim):** `se_log = float(np.sqrt(l1.var(ddof=1) / len(l1)
+  + l0.var(ddof=0) * 0 + l0.var(ddof=1) / len(l0)))` — an accidental
+  `l0.var(ddof=0) * 0` term (exactly 0.0) inside the Welch SE for
+  log1p(spend).
+- **Cause:** leftover editing artifact when writing the R3 line.
+- **Impact on results:** none — the term evaluates to exactly 0.0, so the SE
+  is mathematically identical with or without it (verified below).
+- **Correction:** term removed; source rerun so artifacts match final code.
+- **Retest:** 06 rerun after fix (`main-analysis-2026-11-12`); outputs
+  byte-compared against the pre-fix run — identical to full floating-point
+  precision. Confirmed by diff of robustness_transformations.csv,
+  robustness.csv and robustness_bootstrap.csv (both run logs in
+  results/logs/).
+
+### M5. VT-8 parser regex mismatch in src/08 (implementation error; first 08 run failed)
+
+- **Original behavior (verbatim from run log):** `FAIL  VT-8: write-up
+  numbers reconcile with primary_results.csv — 0 md estimates matched to CSV
+  within rounding (5e-7)` — run `.20261112T101608Z`, exit 1.
+- **Cause:** the VT-8 regex `r"\| ([^|]+) \| (\S+) \| ([+\-\d.]+) \|"`
+  expected the write-up table's third cell to be a bare number, but the
+  primary_results.md table renders estimates as `+0.076590 pp` /
+  `+0.769827 $` (value plus unit inside one cell). The regex therefore
+  matched 0 lines and VT-8 failed on a parser defect, not on a numerical
+  disagreement.
+- **Correction:** regex updated to accept the unit suffix:
+  `r"\| ([^|]+) \| (\S+) \| ([+\-\d.]+) (?:pp|\$) \|"`. No numerical output
+  of any script was changed.
+- **Retest:** PASSED — second run of 08 exited 0 (log
+  `main-analysis-2026-11-12__08_reconcile_and_report.20261112T101639Z.txt`);
+  VT-8 now reports 6/6 md estimates matched to CSV within rounding (5e-7);
+  all 9 checks PASS.
+- **Logged via:** results/logs/main-analysis-2026-11-12__08_reconcile_and_report
+  .20261112T101608Z.txt and timestamped failure copy (exit code 1 in
+  results/logs/exit_codes.csv).
